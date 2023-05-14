@@ -6,32 +6,51 @@
 
 (in-package :om)
 
-(mapc 'compile&load (list
-                         ;(make-pathname  :directory (append (pathname-directory *load-pathname*) (list "sources")) :name "om-modifs" :type "lisp")	
-                         (make-pathname  :directory (append (pathname-directory *load-pathname*) (list "sources")) :name "screamboxes" :type "lisp")
-                         (make-pathname  :directory (append (pathname-directory *load-pathname*) (list "sources")) :name "screamfuns" :type "lisp") 
-                         (make-pathname  :directory (append (pathname-directory *load-pathname*) (list "sources")) :name "screaminterface" :type "lisp")
-						 (make-pathname  :directory (append (pathname-directory *load-pathname*) (list "examples")) :name "scream-ais" :type "lisp")	
-                         ;(make-pathname  :directory (append (pathname-directory *load-pathname*) (list "sources/closer-mop")) :name "closer-mop-packages" :type "lisp")						 
-                         ;(make-pathname  :directory (append (pathname-directory *load-pathname*) (list "sources/closer-mop")) :name "closer-mop-shared" :type "lisp")
-						 ;(make-pathname  :directory (append (pathname-directory *load-pathname*) (list "sources/closer-mop")) :name "closer-lispworks" :type "lisp")							 
-                         ;(make-pathname  :directory (append (pathname-directory *load-pathname*) (list "sources/screamer-plus")) :name "screamer-plus" :type "lisp")						  						 
-                    )
-)
+
+;--------------------------------------------------
+;Variable definiton with files to load 
+;--------------------------------------------------
+
+(defvar *screamer-files* nil)
+(setf  *screamer-files* (list 
+                         ;(om::om-relative-path '("sources") "om-modifs")
+                         (om::om-relative-path '("sources") "screamboxes")
+                         (om::om-relative-path '("sources") "screamfuns")
+                         (om::om-relative-path '("sources") "screaminterface")
+                         (om::om-relative-path '("examples") "scream-ais") ;maybe should go in sources
+                         (om::om-relative-path '("sources" "constraints") "constraint")
+                         (om::om-relative-path '("sources" "constraints") "constraint-boxes")
+                         ;(om::om-relative-path '("sources" "closer-mop") "closer-mop-packages")
+                         ;(om::om-relative-path '("sources" "closer-mop") "closer-mop-shared")
+                         ;(om::om-relative-path '("sources" "closer-mop") "closer-mop-lispworks")
+                         ;(om::om-relative-path '("sources" "screamer-plus") "screamer-plus")
+                         ))
+
+
+
+;--------------------------------------------------
+;Loading files 
+;--------------------------------------------------
+(mapc #'compile&load *screamer-files*)
+
+;--------------------------------------------------
+;Fill library 
+;--------------------------------------------------
+
 
 (fill-library '( ("Backtrack" Nil Nil (an-integer-between
-									   a-member-of
-									   apply-cont
-									   list-of-members-of 
+                                       a-member-of
+                                       apply-cont
+                                       list-of-members-of 
                                        list-of-integers-between 
-									   a-chord-in
-									   list-of-chords-in
-									   alldiff?
-									   growing? ) Nil)
+                                       a-chord-in
+                                       list-of-chords-in
+                                       alldiff?
+                                       growing? ) Nil)
 
                 ;("FOLDER2" Nil Nil (package::FUNCTION) Nil)
 
-))
+                 ))
 (print 
 "
 OM-SCREAMER Library
