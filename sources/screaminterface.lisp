@@ -21,7 +21,7 @@
             (setf dialog (om-make-window 'non-deter-window 
                                          :window-title "Non deterministc listener"
                                          :position :centered 
-                                         :window-show nil
+                                        ; :window-show nil
                                          :size *screamer-listener-size*
                            ;:font (om-make-font "Arial" 12 :mode :srcor :style :plain)
                                          :bg-color (om-make-color 0.875 0.875 0.875)))
@@ -52,7 +52,7 @@
            (t (setf dialog (om-make-window 'om-window 
                                            :window-title "Non deterministc listener"
                                            :position :centered 
-                                           :window-show nil
+                                          ; :window-show nil
                                            :size *screamer-listener-size*
                             ; :font (om-make-font "Arial" 12 :mode :srcor :style :plain)
                                            :bg-color (om-make-color 0.875 0.875 0.875)))

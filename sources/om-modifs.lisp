@@ -513,7 +513,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; portable
 
-	 (defmethod portable-draw-after-box ((self patchboxFrame))
+(defmethod portable-draw-after-box ((self patchboxFrame))
 	   (with-fore-color
 	    16719095
 	    (when (non-deter-patch? (reference (object self)))
@@ -522,7 +522,7 @@
 
 
 
-defmethod portable-draw-after-box ((self aliasBoxframe))
+(defmethod portable-draw-after-box ((self aliasBoxframe))
   (let ((view (iconView self)))
     (with-focused-view view
 		       (rlet ((r :rect                         

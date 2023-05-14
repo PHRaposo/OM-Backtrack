@@ -2,8 +2,24 @@
 
 (defvar *screamer-valuation* 0)
 
-(defclass screamerboxes (OMBoxCall) ()
+(defclass* screamerboxes (OMBoxCall) () 
    (:documentation "Screamer boxes"))
+
+#|
+(defmethod omNG-copy ((self screamerboxes))
+  "Cons a Lisp expression that return a copy of self when it is valuated."
+  `(let ((rep (make-instance ',(type-of self)
+                             :midiport ,(midiport self)
+                             :nbtracks ,(nbtracks self)
+                             :port ,(port self))))
+     (setf (channels-ctrl rep) (list ,.(loop for ctrl in (channels-ctrl self) collect
+                                               (omNG-copy ctrl))))
+     (setf (miditrack rep) ',(miditrack self))
+     (setf (presets rep) ',(presets self))
+     rep
+     ))
+|#
+
 
 (defmethod omNG-box-value ((self screamerboxes) &optional (numout 0))
    "Eval the output indexed by 'numout' for the box 'self'. In this method we call the generic function reference of 'self'."
