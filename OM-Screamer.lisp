@@ -20,6 +20,7 @@
                          (om::om-relative-path '("examples") "scream-ais") ;maybe should go in sources
                          (om::om-relative-path '("sources" "constraints") "constraint")
                          (om::om-relative-path '("sources" "constraints") "constraint-boxes")
+                         (om::om-relative-path '("sources") "screamer-constraint-solver")	  
                          ;(om::om-relative-path '("sources" "closer-mop") "closer-mop-packages")
                          ;(om::om-relative-path '("sources" "closer-mop") "closer-mop-shared")
                          ;(om::om-relative-path '("sources" "closer-mop") "closer-mop-lispworks")
