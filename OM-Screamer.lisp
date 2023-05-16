@@ -48,6 +48,12 @@
                                        list-of-chords-in
                                        alldiff?
                                        growing? ) Nil)
+                
+	           ("Solver" Nil Nil (screamer-solver) Nil)
+	           ("Variables" Nil Nil (an-integer-betweenv a-member-ofv an-integerv) Nil)			   
+			       ("Predicates" Nil Nil (>v ) Nil) ;+v -v *v /v <v =v /=v etc...) Nil)
+			       ("Ordering" Nil Nil (static-ordering reorder) Nil)
+			       ("Force-function" Nil Nil (linear-force divide-and-conquer-force) Nil) 
 
                 ;("FOLDER2" Nil Nil (package::FUNCTION) Nil)
 
