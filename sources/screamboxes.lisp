@@ -1,7 +1,5 @@
 (in-package :om)
 
-(defvar *screamer-valuation* 0)
-
 (defclass* screamerboxes (OMBoxCall) () 
    (:documentation "Screamer boxes"))
 
