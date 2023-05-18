@@ -4,6 +4,8 @@
 ; OM-BACKTRACK PREFERENCES MODULE
 ;=================================================
 
+(defvar *screamer-valuation* 0)
+
 (defmethod put-preferences ((iconID (eql :backtrack)))
    (let ((modulepref (find-pref-module iconID)))
    (setf *screamer-valuation* (get-pref modulepref :scream-val))))
