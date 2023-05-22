@@ -4,6 +4,6 @@ THIS IS AN ATTEMPT TO PORT THE OM-BACKTRACK LIBRARY (CONSTRAINT SOLVER PROJECT F
 THIS PROJECT ALSO AIMS TO EXPAND SCREAMER POSSIBILITIES WITH SCREAMER-PLUS (SEE https://github.com/danlentz/screamer-plus/blob/master/screamer-plus.lisp).
 THE SCREAMER PACKAGE ITSELF WAS NOT INCLUDED HERE SINCE IT'S ALREADY AVAILABLE IN OM (FROM MATHTOOLS).
 
-![alt text](https://github.com/PHRaposo/OM-Screamer/blob/screenshot.pgn?raw=true)
+![alt text](https://github.com/PHRaposo/OM-Screamer/blob/main/screenshot.png?raw=true)
 
 
