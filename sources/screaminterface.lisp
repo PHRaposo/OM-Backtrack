@@ -21,7 +21,7 @@
             (setf dialog (om-make-window 'non-deter-window 
                                          :window-title "Non deterministc listener"
                                          :position :centered 
-                                        ; :window-show t ;nil
+                                        ; :window-show nil
                                          :size *screamer-listener-size*
                            ;:font (om-make-font "Arial" 12 :mode :srcor :style :plain)
                                          :bg-color (om-make-color 0.875 0.875 0.875)))
@@ -52,7 +52,7 @@
            (t (setf dialog (om-make-window 'om-window 
                                            :window-title "Non deterministc listener"
                                            :position :centered 
-                                          ; :window-show t ;nil
+                                          ; :window-show nil
                                            :size *screamer-listener-size*
                             ; :font (om-make-font "Arial" 12 :mode :srcor :style :plain)
                                            :bg-color (om-make-color 0.875 0.875 0.875)))
@@ -90,7 +90,27 @@
          (if (= om::*screamer-valuation* 2)
            (unless (om::non-determinise-listener value)
              (throw 'succeed value))
-           (progn (throw 'succeed value) (print value)))))))		   
+           (progn (throw 'succeed value) (print value)))))))
+#|
+;;;============================================================================== ;
+;;; ORIGINAL - FROM SCREAMER.LISP - REDEFINED IN OM-BACKTRACK LIBRARY ;;;
+		   
+(defmacro-compile-time print-values (&body expressions)
+ "doc"
+ ;; FIXME: Documentation lies: does not always return NIL.
+ `(catch 'succeed
+    (for-effects
+      (let ((value (progn ,@expressions)))
+        (print value)
+        (unless (y-or-n-p "Do you want another solution?")
+          (throw 'succeed value))))))
+
+;;; note: Should have way of having a stream of values.
+
+(eval-when (:compile-toplevel :load-toplevel :execute) (setf *screamer?* t))
+
+;;;============================================================================= ;
+|#
 (in-package :om)
 
 
