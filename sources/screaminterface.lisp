@@ -2,7 +2,7 @@
 
 (defvar *screamer-listener-size* (om-make-point 600 300));(om-make-point 400 200))
 
-(defclass non-deter-window (EditorWindow om-dialog oa::om-abstract-window capi::interface)
+(defclass non-deter-window (EditorWindow om-dialog)
   ((value-item :initform nil :accessor value-item)))
 
 (defmethod om-set-view-size ((self non-deter-window) size) 
