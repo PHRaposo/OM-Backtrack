@@ -1,14 +1,14 @@
 (in-package :om)
 
-(defvar *screamer-listener-size* (om-make-point 400 200))
+(defvar *screamer-listener-size* (om-make-point 600 300));(om-make-point 400 200))
 
-(defclass non-deter-window (EditorWindow)
+(defclass non-deter-window (EditorWindow om-dialog oa::om-abstract-window capi::interface)
   ((value-item :initform nil :accessor value-item)))
 
 (defmethod om-set-view-size ((self non-deter-window) size) 
    (declare (ignore size))
    (call-next-method) 
-   (setf *screamer-listener-size* (om-view-size self))
+   ;(setf *screamer-listener-size* (om-view-size self))
    (when (value-item self)
      (om-set-view-size (value-item self) (om-make-point (- (w self) 25) (- (h self) 50)))))
 	 
@@ -21,9 +21,9 @@
             (setf dialog (om-make-window 'non-deter-window 
                                          :window-title "Non deterministc listener"
                                          :position :centered 
-                                        ; :window-show nil
+                                         :window-show nil
                                          :size *screamer-listener-size*
-                           ;:font (om-make-font "Arial" 12 :mode :srcor :style :plain)
+                                         ;:font (om-make-font "Arial" 12 :mode :srcor :style :plain)
                                          :bg-color (om-make-color 0.875 0.875 0.875)))
             (cond
              ((Class-has-editor-p value)
@@ -32,9 +32,8 @@
                                                         :ref nil
                                                         :container dialog
                                                         :object value
-                                                        :position (om-make-point 25 35) 
+                                                        :position (om-make-point 10 35) 
                                                         :size (om-make-point (- (w dialog) 25) (- (h dialog) 50))))))
-             
              (t (setf (value-item dialog) 
                       (setf (editor dialog) 
                             (let* ((instance (omNG-make-new-instance value "instance"))
@@ -42,27 +41,31 @@
                                                          :ref nil
                                                          :container dialog
                                                          :object instance
-                                                         :position (om-make-point 25 35) 
+                                                         :position (om-make-point 10 35) 
                                                          :size (om-make-point (- (w dialog) 25) (- (h dialog) 50))))
                                    (slot-boxes (make-slots-ins-boxes instance)))
                               (setf (presentation editor) 0)
                               (mapc #'(lambda (frame)
                                         (omG-add-element (panel editor) frame)) slot-boxes)
                               editor))))))
-           (t (setf dialog (om-make-window 'om-window 
-                                           :window-title "Non deterministc listener"
-                                           :position :centered 
-                                          ; :window-show nil
-                                           :size *screamer-listener-size*
-                            ; :font (om-make-font "Arial" 12 :mode :srcor :style :plain)
-                                           :bg-color (om-make-color 0.875 0.875 0.875)))
+           (t (setf dialog (om-make-window 'om-dialog  
+					   :window-title "Non Deterministic Listener" 
+					   :size (om-make-point 400 200) 
+                                           :position :centered))  
+	     ;(setf dialog (om-make-window 'om-window 
+                                           ;:window-title "Non deterministc listener"
+                                           ;:position :centered 
+                                           ;:window-show nil
+                                           ;:size *screamer-listener-size*
+                                           ;:font (om-make-font "Arial" 12 :mode :srcor :style :plain)
+                                           ;:bg-color (om-make-color 0.875 0.875 0.875)))	    
               (om-make-view 'om-text-edit-view
                             :save-buffer-p t
                             :scrollbars :v
                             :text (format nil "~D" value)
                             :wrap-p t
-                            :size (om-make-point (- (om-point-h (om-interior-size dialog)) 40) (- (om-point-v (om-interior-size dialog)) 50))
-                            :position (om-make-point 25 35)))))
+                            :size (om-make-point 360 150);(- (om-point-h (om-interior-size dialog)) 40) (- (om-point-v (om-interior-size dialog)) 50))
+                            :position (om-make-point 10 35)))))
     (om-add-subviews dialog value-item-view  
                      (om-make-dialog-item 'om-static-text (om-make-point 10 5) (om-make-point 200 16) "Do you want another solution? "
                                           :bg-color (om-make-color 0.624 0.624 0.624))
@@ -73,11 +76,18 @@
                                           :di-action (om-dialog-item-act item
                                                        (om-return-from-modal-dialog dialog t))
                                           :default-button t))
-    dialog
+    (non-deter-modal-dialog dialog)
     ))
 
 ;;;(non-determinise-listener 0)
 
+(defun non-deter-modal-dialog (dialog &optional (owner nil))
+ (declare (ignore owner))
+ (oa::update-for-subviews-changes dialog t)
+  ;(print (list (vsubviews self)))
+ (capi::display-dialog dialog))
+  ;:owner (or owner (om-front-window) (capi:convert-to-screen)) 
+  ;                        :position-relative-to :owner :x (vx dialog) :y (vy dialog)))
 
 ;;;============================================
 
