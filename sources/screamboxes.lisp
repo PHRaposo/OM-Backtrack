@@ -57,7 +57,8 @@
              (setf (value self) rep))
            (when (equal (allow-lock self) "x")
              (setf (value self) rep))
-           (nth numout rep)))))) 
+   		  (progn (setf (value self) rep) 
+               (nth numout rep)))))))
 
 
 (defmacro evalsc (fun arg)
