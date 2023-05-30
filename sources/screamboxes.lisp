@@ -3,6 +3,9 @@
 (defclass* screamerboxes (OMBoxCall) () 
    (:documentation "Screamer boxes"))
 
+(defmethod screamerboxes-p ((self screamerboxes)) t)
+(defmethod screamerboxes-p ((self t)) nil)
+
 #|
 (defmethod omNG-copy ((self screamerboxes))
   "Cons a Lisp expression that return a copy of self when it is valuated."
