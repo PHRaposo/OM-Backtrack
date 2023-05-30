@@ -83,7 +83,7 @@
                    ;         :size (om-make-point 360 150);(- (om-point-h (om-interior-size dialog)) 40) (- (om-point-v (om-interior-size dialog)) 50))
                     ;        :position (om-make-point 10 35)))))
     (om-add-subviews dialog value-item-view  
-                     (om-make-dialog-item 'om-static-text (om-make-point 25 10) (om-make-point 420 200) "DO YOU WANT ANOTHER SOLUTION?")
+                     (om-make-dialog-item 'om-static-text (om-make-point 25 10) (om-make-point 420 20) "DO YOU WANT ANOTHER SOLUTION?")
                                           ;:bg-color (om-make-color 0.624 0.624 0.624))
                      (om-make-dialog-item 'om-button (om-make-point 250 5) (om-make-point 62 20) "No" 
                                           :di-action (om-dialog-item-act item
