@@ -18,9 +18,10 @@
    (cond
     ((and (equal (allow-lock self) "x") (value self))
      (nth num-out (value self)))
-    ((and (equal (allow-lock self) "o") 
+    ;((and (equal (allow-lock self) "o") (reference self))) ; => OM 4 
+	((and (equal (allow-lock self) "o")
 	 (setf (value self) (list (reference self))) (car (value self)))) ; => OM 7.2
-	;(reference self)))
+
     ((equal (allow-lock self) "l")
      (unless (compiled? (reference self))
        (if (and (lisp-exp-p (reference self)) (editorframe self))
@@ -61,7 +62,7 @@
            (when (equal (allow-lock self) nil)
              (setf (value self) rep))
            ;;;;		   
-         (nth num-out rep))))))
+          (nth num-out rep))))))
 
 (defmethod compile-patch ((self OMPatch)) 
 "Generation of lisp code from the graphic boxes."
@@ -98,32 +99,34 @@
 	   ))	
 (setf (compiled? self) t)))	
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
+;;; TODO - DRAW-AFTER-BOX - OMLOOP - LAMBDA-LISP-PATCH
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; DRAW-AFTER-BOX
 
 (defmethod draw-after-box ((self patchboxframe)) ; POSSIBLE OM 7 VERSION 	
-  	(setf non-deter (non-deter-patch? (reference (object self))))
-  	(eval `(print ,non-deter))		
- ;(om-with-fg-color self *om-pink-color*
-  ;(when (non-deter-patch? (reference (object self)))
-   ;   (om-draw-char  (- (round (w self) 2) 8) (+ (round (h self) 2) 6) #\?))) 
-	) 
-
-#|
-DRAW-AFTER-BOX ; OM 4
+ (setf non-deter (non-deter-patch? (reference (object self))))
+ (eval `(print ,non-deter))		
+;(om-with-fg-color self *om-pink-color*
+;(when (non-deter-patch? (reference (object self)))
+ ;   (om-draw-char  (- (round (w self) 2) 8) (+ (round (h self) 2) 6) #\?))) 
+ ) 
+ 
+ #|
+ ; OM 4
+ DRAW-AFTER-BOX 
  => BOXFRAME.LISP => MAQUETTEFRAME.LISP = >
  ;screamer
-(defmethod draw-after-box ((self patchboxFrame))
+ (defmethod draw-after-box ((self patchboxFrame))
    (with-fore-color 16719095
      (when (non-deter-patch? (reference (object self)))
        (#_Textsize 28)
        (draw-char (- (round (w self) 2) 8) (+ (round (h self) 2) 6) #\? ))))
-	   
-(defmethod draw-after-box ((self loopboxframe))
 
-|#
+ (defmethod draw-after-box ((self loopboxframe))
+ |#
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
-;;; TODO - OMLOOP - LAMBDA-LISP-PATCH
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+		 
 
-	
