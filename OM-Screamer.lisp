@@ -17,6 +17,7 @@
 			 (om::om-relative-path '("sources") "screamboxes")
                          (om::om-relative-path '("sources") "screamfuns")
                          (om::om-relative-path '("sources") "screaminterface")
+			 (om::om-relative-path '("sources") "non-deter-patch")
                          ;(om::om-relative-path '("sources" "constraints") "constraint")
                          ;(om::om-relative-path '("sources" "constraints") "constraint-boxes")
                          ;(om::om-relative-path '("sources") "screamer-constraint-solver")	  
