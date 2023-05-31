@@ -106,12 +106,13 @@
 ;;; DRAW-AFTER-BOX
 
 (defmethod draw-after-box ((self patchboxframe)) ; POSSIBLE OM 7 VERSION 	
- (setf non-deter (non-deter-patch? (reference (object self))))
- (eval `(print ,non-deter))		
-;(om-with-fg-color self *om-pink-color*
-;(when (non-deter-patch? (reference (object self)))
- ;   (om-draw-char  (- (round (w self) 2) 8) (+ (round (h self) 2) 6) #\?))) 
- ) 
+; (setf non-deter (non-deter-patch? (reference (object self))))
+; (eval `(print ,non-deter))
+(when (non-deter-patch? (reference (object self)))
+ (om-with-fg-color self *om-pink-color*
+  (om-with-font (om-make-font "Liberation Sans" 28)
+   (om-draw-char 0 32 #\?)
+   ))))
  
  #|
  ; OM 4
