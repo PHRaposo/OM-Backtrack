@@ -103,29 +103,6 @@ Lambda expression are the form '(lambda <param-list> <body>")
       (loop for item in (attached-objs (patchref self)) do
             (update-from-reference item)))
     (setf (compiled? (patchref self)) t)))
-	
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; PatchBoxes.lisp
-
-;;screamer
-(defmethod gen-code ((self OMBoxPatch) numout)
-  (let ((patchfun `,(intern (string (code (reference self))) :om)))
-    (cond
-     ((equal (allow-lock self) "&") 
-      (gen-code-for-ev-once self numout))
-     ((equal (allow-lock self) "l")
-      (curry-lambda-code self  patchfun))
-     ((equal (allow-lock self) "o")  (reference self))
-     ((equal (allow-lock self) "x") 
-      `(nth ,numout ,(gen-code (value self) 0)))
-     (t
-      (if (zerop numout)
-	  `(,patchfun ,.(decode self))
-	`(nth ,numout (multiple-value-list (,patchfun ,.(decode self)))))))))
-
-;;screamer
-(defmethod omNG-box-value ((self OMBoxPatch) &optional (num-out 0))
-  (portable-omNG-box-value self num-out))
 	  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
