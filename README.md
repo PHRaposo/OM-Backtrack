@@ -7,4 +7,4 @@ THE SCREAMER PACKAGE ITSELF WAS NOT INCLUDED HERE SINCE IT'S ALREADY AVAILABLE I
 ![alt text](https://github.com/PHRaposo/OM-Screamer/blob/main/screenshot.png?raw=true)
 
 
-Original Tutotial Page (by Charlotte Tuchet): http://recherche.ircam.fr/equipes/repmus/OpenMusic/user-doc/DocFiles/backtrackTutorial/ .
+Original Tutorial Page (by Charlotte Tuchet): http://recherche.ircam.fr/equipes/repmus/OpenMusic/user-doc/DocFiles/backtrackTutorial/ .
