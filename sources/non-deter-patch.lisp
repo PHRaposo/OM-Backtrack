@@ -100,7 +100,7 @@
 (setf (compiled? self) t)))	
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
-;;; TODO - DRAW-AFTER-BOX - OMLOOP - LAMBDA-LISP-PATCH
+;;; TODO - DRAW-AFTER-BOX - OMLOOP - LISP-PATCH-CODE -Eval-once error (tutorial-8)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; DRAW-AFTER-BOX
