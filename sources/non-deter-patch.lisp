@@ -67,11 +67,11 @@
 (defmethod compile-patch ((self OMPatch)) 
 "Generation of lisp code from the graphic boxes."
 (unless (compiled? self)
-(if (lisp-exp-p self)	
+(if (lisp-exp-p self)		
     (compile (eval `(screamer::defun ,(intern (string (code self)) :om)
-			,.(cdr (get-lisp-exp self)))))						
+              ,.(cdr (get-lisp-exp (lisp-exp-p self))))))					
   (let* ((boxes (boxes self))
-     (vars (find-class-boxes boxes 'screamerboxes))
+     ;(vars (find-class-boxes boxes 'screamerboxes)) ;;;=> 'OMBoxVar in OM 4 
      (temp-out-box (find-class-boxes boxes 'OMtempOut))
      (self-boxes (patch-has-temp-in-p self)) 
      (out-box (find-class-boxes boxes 'OMout))
@@ -80,27 +80,23 @@
      (oldletlist *let-list*)
      (oldlambdacontext *lambda-context*)		 
 	  symbols body)
-(setf out-box (sort out-box '< :key 'indice))
-(setf in-boxes (sort in-boxes '< :key 'indice))
-(setf symbols (mapcar #'(lambda (thein)
-			  (setf (in-symbol thein) (gensym))) in-boxes))
+(setf out-box (list+ temp-out-box (sort out-box '< :key 'indice)))
+(setf in-boxes (list+ self-boxes (sort in-boxes '< :key 'indice)))
+(setf symbols (mapcar #'(lambda (thein) (setf (in-symbol thein) (gensym))) in-boxes))
 (setf *let-list* nil)
-(mapc #'(lambda (thevar) (gen-code thevar 0)) vars)
+;(mapc #'(lambda (thevar) (gen-code thevar 0)) vars) ;; ??? => OM 4 
 (setf body `(values ,.(mapcar #'(lambda (theout)
-				  (gen-code theout 0)) out-box)))
-    (setf *let-list* oldletlist)
-	(setf *lambda-context* oldlambdacontext)
-				 
-         (eval  `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
-		 				 (let* ,*let-list* ,body)))					 
-				 				 
+				                 (gen-code theout 0)) out-box)))
+         (eval `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
+		 				 (let* ,(reverse *let-list*) ,body)))
+					 						 		 	 
        (setf *let-list* oldletlist)
        (setf *lambda-context* oldlambdacontext)
 	   ))	
 (setf (compiled? self) t)))	
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
-;;; TODO - DRAW-AFTER-BOX - OMLOOP - LISP-PATCH-CODE -Eval-once error (tutorial-8)
+;;; TODO - DRAW-AFTER-BOX - OMLOOP - LISP-PATCH-CODE
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; DRAW-AFTER-BOX
