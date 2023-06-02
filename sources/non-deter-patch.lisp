@@ -95,35 +95,23 @@
 	   ))	
 (setf (compiled? self) t)))	
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
-;;; TODO - DRAW-AFTER-BOX - OMLOOP - LISP-PATCH-CODE
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; DRAW-AFTER-BOX
+;;; OM-DRAW-CONTENTS
 
-(defmethod draw-after-box ((self patchboxframe)) ; POSSIBLE OM 7 VERSION 	
-; (setf non-deter (non-deter-patch? (reference (object self))))
-; (eval `(print ,non-deter))
-(when (non-deter-patch? (reference (object self)))
- (om-with-fg-color self *om-pink-color*
-  (om-with-font (om-make-font "Liberation Sans" 28)
-   (om-draw-char 0 32 #\?)
-   ))))
- 
- #|
- ; OM 4
- DRAW-AFTER-BOX 
- => BOXFRAME.LISP => MAQUETTEFRAME.LISP = >
- ;screamer
- (defmethod draw-after-box ((self patchboxFrame))
-   (with-fore-color 16719095
-     (when (non-deter-patch? (reference (object self)))
-       (#_Textsize 28)
-       (draw-char (- (round (w self) 2) 8) (+ (round (h self) 2) 6) #\? ))))
+(defmethod om-draw-contents :after ((self patch-finder-icon))
+  (when (non-deter-patch? (object (om-view-container self)))
+      (om-with-fg-color self *om-pink-color*
+       (om-with-font (om-make-font "Courier" 34)
+        (om-draw-char (- (round (w self) 2) 10) (+ (round (h self) 2) 10) #\?)))))
 
- (defmethod draw-after-box ((self loopboxframe))
- |#
+(defmethod om-draw-contents :after ((self patch-icon-box))
+  (when (non-deter-patch? (reference (object (om-view-container self))))
+      (om-with-fg-color self *om-pink-color*
+       (om-with-font (om-make-font "Courier" 34)
+        (om-draw-char (- (round (w self) 2) 10) (+ (round (h self) 2) 10) #\?)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
+;;; TODO - OMLOOP - LISP-PATCH-CODE
+
 		 
 
