@@ -101,14 +101,20 @@
 (defmethod om-draw-contents :after ((self patch-finder-icon))
   (when (non-deter-patch? (object (om-view-container self)))
       (om-with-fg-color self *om-pink-color*
-       (om-with-font (om-make-font "Courier" 34)
-        (om-draw-char (- (round (w self) 2) 10) (+ (round (h self) 2) 10) #\?)))))
+		  (if (= (presentation (editor *om-workspace-win*)) 0)
+              (om-with-font (om-make-font "Courier" 34)
+               (om-draw-char (- (round (w self) 2) 10) (+ (round (h self) 2) 10) #\?))
+               (om-with-font (om-make-font "Courier" 22)
+                (om-draw-char (- (round (w self) 2) 6) (+ (round (h self) 2) 6) #\?))
+	))))
 
 (defmethod om-draw-contents :after ((self patch-icon-box))
   (when (non-deter-patch? (reference (object (om-view-container self))))
-      (om-with-fg-color self *om-pink-color*
-       (om-with-font (om-make-font "Courier" 34)
-        (om-draw-char (- (round (w self) 2) 10) (+ (round (h self) 2) 10) #\?)))))
+   (om-with-fg-color self *om-pink-color*
+    (om-with-font (om-make-font "Courier" (* *icon-size-factor* 34))
+      (om-draw-char (- (round (w self) 2) (* *icon-size-factor* 10)) 
+		    (+ (round (h self) 2) (* *icon-size-factor* 10)) 
+                    #\?)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
 ;;; TODO - OMLOOP - LISP-PATCH-CODE
