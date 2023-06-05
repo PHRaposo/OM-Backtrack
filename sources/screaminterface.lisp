@@ -27,7 +27,7 @@
           (cond 
            ((omclass-p (class-of (class-of value)))
             (setf dialog (om-make-window 'non-deter-window 
-                                         :window-title "Non Deterministc Listener"
+                                         :window-title "Non Deterministic Listener"
                                          :position :centered 
                                          ;:window-show nil
                                          :size (om-make-point 600 350) ;*screamer-listener-size*
