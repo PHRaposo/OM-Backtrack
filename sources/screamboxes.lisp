@@ -32,7 +32,10 @@
                                                :size (om-make-point 300 200))
                                (om-abort)))))
      (cond
-      ((or (equal (allow-lock self) "l") 
+      ((equal (allow-lock self) "l") 
+       (setf (value self) (list (special-lambda-value self (intern (string (reference self)) :s)))) ;;;intern screamfun to :s package
+       (car (value self)))
+      ((or ;(equal (allow-lock self) "l") 
            (equal (allow-lock self) "o")  
            (and (equal (allow-lock self) "x") (value self)) 
            (and (equal (allow-lock self) "&") (ev-once-p self))) (call-next-method))
@@ -67,13 +70,41 @@
 
 
 (defmethod special-lambda-value ((self screamerboxes) symbol)
-   "Eval a box in lambda mode."
+   "Eval a screamerbox in lambda mode."
    (multiple-value-bind (nesymbs args) (get-args-eval-currry self)
      (eval `#'(lambda ,(reverse nesymbs)
                 (case *screamer-valuation*
                   (0 (s::one-value (,symbol ,.args)))
                   (1 (s::all-values (,symbol ,.args)))  
                   (2 (s::print-values (,symbol ,.args))))))))
+
+(defmethod curry-lambda-code ((self screamerboxes) symbol)
+  "Lisp code generation for a screamerbox in lambda mode."
+
+   (let ((nesymbs nil)
+         (oldlambdacontext *lambda-context*))
+     (setf *lambda-context* t)
+     
+     (unwind-protect 
+         (let ((args (mapcan #'(lambda (input)
+                                 (let ((a (if (connected? input)
+                                              (gen-code input 0)
+                                            (let ((newsymbol (gensym)))
+                                              (push newsymbol nesymbs)
+                                              newsymbol))))
+                                   (if (keyword-input-p input) 
+                                       (list (value input) a) 
+                                     (list a))))
+                             (inputs self))))
+
+    `#'(lambda ,(reverse nesymbs)
+             (case *screamer-valuation* 
+               (0 (s::one-value (,symbol ,.args)))
+               (1 (s::all-values (,symbol ,.args)))
+               (2 (s::print-values (,symbol ,.args))))))
+
+       (setf *lambda-context* oldlambdacontext)
+  )))
 
 (defmethod gen-code-call ((self screamerboxes) &optional args)
    (let ((screamerfun `,(intern (string (reference self)) :s)))
