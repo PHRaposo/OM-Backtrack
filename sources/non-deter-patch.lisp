@@ -7,6 +7,12 @@
 (let ((record (s::get-function-record (intern (string (car (list! (code self)))) :om))))
 (not (s::function-record-deterministic? record))))
 
+(defmethod non-deter-patch? ((self OMLispPatch)) 
+(let* ((fun (eval `(screamer::defun ,(intern (string (code self)) :om)
+              ,.(cdr (get-lisp-exp (lisp-exp self))))))
+         (record (s::get-function-record fun)))
+(not (s::function-record-deterministic? record))))
+
 (defmethod omNG-box-value ((self OMBoxPatch) &optional (num-out 0))
 (handler-bind ((error #'(lambda (c)
                           (when *msg-error-label-on*
@@ -16,6 +22,11 @@
                             (clear-after-error self)
                             (om-abort)))))
    (cond
+   ((and (equal (allow-lock self) "l") (non-deter-patch? (reference self)))
+          ;compile function -> special-lambda-value -> for nondeterministic patches
+          (om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
+         (clear-after-error self)
+         (om-abort))		   
     ((and (equal (allow-lock self) "x") (value self))
      (nth num-out (value self)))
     ;((and (equal (allow-lock self) "o") (reference self))) ; => OM 4 
@@ -69,7 +80,7 @@
 (unless (compiled? self)
 (if (lisp-exp-p self)		
     (compile (eval `(screamer::defun ,(intern (string (code self)) :om)
-              ,.(cdr (get-lisp-exp (lisp-exp-p self))))))					
+              ,.(cdr (get-lisp-exp (lisp-exp self)))))) ;(lisp-exp-p self))))))					
   (let* ((boxes (boxes self))
      ;(vars (find-class-boxes boxes 'screamerboxes)) ;;;=> 'OMBoxVar in OM 4 
      (temp-out-box (find-class-boxes boxes 'OMtempOut))
@@ -98,15 +109,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; OM-DRAW-CONTENTS
 
-(defmethod om-draw-contents :after ((self patch-finder-icon))
+#|
+(defmethod om-draw-contents :after ((self patch-finder-icon)) ; maybe not needed
   (when (non-deter-patch? (object (om-view-container self)))
       (om-with-fg-color self *om-pink-color*
-		  (if (= (presentation (editor *om-workspace-win*)) 0)
+		  (if (= (presentation (editor *om-workspace-win*)) 0) ;do not update size when the patch is inside folders
               (om-with-font (om-make-font "Courier" 34)
                (om-draw-char (- (round (w self) 2) 10) (+ (round (h self) 2) 10) #\?))
                (om-with-font (om-make-font "Courier" 22)
                 (om-draw-char (- (round (w self) 2) 6) (+ (round (h self) 2) 6) #\?))
 	))))
+|#
 
 (defmethod om-draw-contents :after ((self patch-icon-box))
   (when (non-deter-patch? (reference (object (om-view-container self))))
