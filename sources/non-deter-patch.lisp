@@ -8,8 +8,9 @@
 (not (s::function-record-deterministic? record))))
 
 (defmethod non-deter-patch? ((self OMLispPatch))
-(if (or (null (first (cdr (get-lisp-exp (lisp-exp self)))))
-        (equal (second (cdr (get-lisp-exp (lisp-exp self))))'(ombeep)))
+(if (or (null (get-lisp-exp (lisp-exp self)))
+	(and (null (first (cdr (get-lisp-exp (lisp-exp self)))))
+             (equal (second (cdr (get-lisp-exp (lisp-exp self))))'(ombeep))))
     (declare (ignore self)) 
 (let* ((fun (eval `(screamer::defun ,(intern (string (code self)) :om)
               ,.(cdr (get-lisp-exp (lisp-exp self))))))
