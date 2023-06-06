@@ -38,11 +38,22 @@
                             (clear-after-error self)
                             (om-abort)))))
    (cond
+    ((and (equal (allow-lock self) "l") 
+	     (non-deter-patch? (reference self))
+	     (lisp-exp-p (reference self)))       
+	      (om-message-dialog "Nondeterministic lisp patches in lambda mode has not been implemented yet.")
+              (clear-after-error self)
+              (om-abort))
+	   
    ((and (equal (allow-lock self) "l") (non-deter-patch? (reference self)))
+    	  (om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
+          (clear-after-error self)
+          (om-abort))
          ;compile-patch ???
          ;(setf (value self) ??? (list 
-   	 (special-lambda-value self (intern (string (code (reference self))) :om))) ;)
+   	 ;(special-lambda-value self (intern (string (code (reference self))) :om))) ;)
          ;(car (value self))) ???
+	   
     ((and (equal (allow-lock self) "x") (value self))
      (nth num-out (value self)))
     ;((and (equal (allow-lock self) "o") (reference self))) ; => OM 4 
@@ -169,7 +180,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SPECIAL-LAMBDA-VALUE / CURRY-LAMBDA-CODE
 ;;; => ADAPTED FROM OMLOOP <= ;;;
-		 
+#|		 
 ;screamer
 (defmethod special-lambda-value ((self OMBoxPatch) symbol)
   "Eval a patch box in lambda mode."
@@ -217,7 +228,7 @@
  (setf *lambda-context* oldlambdacontext)	
 
  )))
-
+|#
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; OMLispPatch
 
