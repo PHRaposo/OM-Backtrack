@@ -130,12 +130,12 @@
 (let ((patch-clone (clone self)))
 
 (if (lisp-exp-p patch-clone)		
-  `(screamer::defun ,(intern (string (code patch-clone)) :om)
+  `(screamer::defun ,(intern (string (code patch-clone)) :om) (,.(second (get-lisp-exp (lisp-exp patch-clone))))
             ;,.(cdr (get-lisp-exp (lisp-exp self)))))) ;(lisp-exp-p self))))))		
 (case *screamer-valuation*
-     (0 (s::one-value ,.(cdr (get-lisp-exp (lisp-exp patch-clone)))))
-     (1 (s::all-values ,.(cdr (get-lisp-exp (lisp-exp patch-clone)))))
-     (2 (s::print-values ,.(cdr (get-lisp-exp (lisp-exp patch-clone)))))))              						
+     (0 (s::one-value ,.(cddr (get-lisp-exp (lisp-exp patch-clone)))))
+     (1 (s::all-values ,.(cddr (get-lisp-exp (lisp-exp patch-clone)))))
+     (2 (s::print-values ,.(cddr (get-lisp-exp (lisp-exp patch-clone)))))))              						
 (let* ((boxes (boxes patch-clone))
    (temp-out-box (find-class-boxes boxes 'OMtempOut))
    (self-boxes (patch-has-temp-in-p patch-clone)) 
