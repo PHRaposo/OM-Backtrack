@@ -7,17 +7,14 @@
 (let ((record (s::get-function-record (intern (string (car (list! (code self)))) :om))))
 (not (s::function-record-deterministic? record))))
 
-#|
-(defmethod non-deter-patch? ((self OMLispPatch)) ; needs a better solution to prevent crashes
-(if (or (null (get-lisp-exp (lisp-exp self)))
-	(and (null (first (cdr (get-lisp-exp (lisp-exp self)))))
-             (equal (second (cdr (get-lisp-exp (lisp-exp self))))'(ombeep))))
-    (declare (ignore self)) 
+(defmethod non-deter-patch? ((self OMLispPatch)) ; needs a better solution to prevent crashes?
+(case (or (not (null (get-lisp-exp (lisp-exp self))))
+	       (and (not (null (first (cdr (get-lisp-exp (lisp-exp self))))))
+                       (not (equal (second (cdr (get-lisp-exp (lisp-exp self))))'(ombeep)))))
 (let* ((fun (eval `(screamer::defun ,(intern (string (code self)) :om)
               ,.(cdr (get-lisp-exp (lisp-exp self))))))
          (record (s::get-function-record fun)))
 (not (s::function-record-deterministic? record)))))
-|#
 
 (defmethod omNG-box-value ((self OMBoxPatch) &optional (num-out 0))
 (handler-bind ((error #'(lambda (c)
