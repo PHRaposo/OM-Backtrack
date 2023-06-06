@@ -310,32 +310,6 @@
                               :indice (incf i)
                               :name (string name))) 
            (subseq args 0 numins))))
-#|
-;;; save.lisp
-(defun load-obj-from-obj (object)
- (if (or (loaded? object)
-  (member object *loaading-stack* :test 'equal)) object
-   (with-cursor
-    *watch-cursor* 
-    (push object *loaading-stack*)
-    (print (string+ "Loading..." (mac-namestring (mypathname object))))
-    (eval-non-text-file (mypathname object))
-    (if *om-current-persistent*
- (progn
-   (setf (boxes object) nil)
-   (setf (connec object) (connec *om-current-persistent*))
-   (mapc #'(lambda (box) (omNG-add-element object (eval box)))
-	 (boxes *om-current-persistent*))
-   (setf (boxes object) (reverse (boxes object)))
-   (load-picts object)
-   (setf (lisp-exp-p object) (lisp-exp-p *om-current-persistent*))
-   (when (lisp-exp-p object)
-     (eval `(screamer::defun ,(intern (string (code object)) :om)
-			     ,.(cdr (eval (lisp-exp-p object))))))
-   (setf *om-current-persistent* nil)
-   object) 
-      'dead))))
-|#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
 ;;; TODO - OMLOOP
