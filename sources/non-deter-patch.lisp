@@ -1,20 +1,33 @@
 (in-package :om)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	  
-;;;;;;;;;;; OM-MODIFS ADAPTED TO OM 7.2
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; "?" - NONDETERMINISTIC PATCH
 
 (defmethod non-deter-patch? ((self OMPatch)) 
 (let ((record (s::get-function-record (intern (string (car (list! (code self)))) :om))))
 (not (s::function-record-deterministic? record))))
 
-(defmethod non-deter-patch? ((self OMLispPatch)) ; needs a better solution to prevent crashes?
-(case (or (not (null (get-lisp-exp (lisp-exp self))))
-	       (and (not (null (first (cdr (get-lisp-exp (lisp-exp self))))))
-                       (not (equal (second (cdr (get-lisp-exp (lisp-exp self))))'(ombeep)))))
-(let* ((fun (eval `(screamer::defun ,(intern (string (code self)) :om)
-              ,.(cdr (get-lisp-exp (lisp-exp self))))))
-         (record (s::get-function-record fun)))
-(not (s::function-record-deterministic? record)))))
+(defmethod om-draw-contents :after ((self patch-icon-box))
+  (when (non-deter-patch? (reference (object (om-view-container self))))
+   (om-with-fg-color self *om-pink-color*
+    (om-with-font (om-make-font "Courier" (* *icon-size-factor* 34))
+      (om-draw-char (- (round (w self) 2) (* *icon-size-factor* 10)) 
+		    (+ (round (h self) 2) (* *icon-size-factor* 10)) 
+                    #\?)))))
+#|
+(defmethod om-draw-contents :after ((self patch-finder-icon)) ; maybe not needed
+  (when (non-deter-patch? (object (om-view-container self)))
+      (om-with-fg-color self *om-pink-color*
+		  (if (= (presentation (editor *om-workspace-win*)) 0) ;do not update size when the patch is inside folders
+              (om-with-font (om-make-font "Courier" 34)
+               (om-draw-char (- (round (w self) 2) 10) (+ (round (h self) 2) 10) #\?))
+               (om-with-font (om-make-font "Courier" 22)
+                (om-draw-char (- (round (w self) 2) 6) (+ (round (h self) 2) 6) #\?))
+	))))
+|#
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; omNG-box-value - OMBoxPatch
 
 (defmethod omNG-box-value ((self OMBoxPatch) &optional (num-out 0))
 (handler-bind ((error #'(lambda (c)
@@ -26,10 +39,10 @@
                             (om-abort)))))
    (cond
    ((and (equal (allow-lock self) "l") (non-deter-patch? (reference self)))
-          ;compile function -> special-lambda-value -> for nondeterministic patches
-          (om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
-         (clear-after-error self)
-         (om-abort))		   
+         ;compile-patch ???
+         ;(setf (value self) ??? (list 
+   	 (special-lambda-value self (intern (string (code (reference self))) :om))) ;)
+         ;(car (value self))) ???
     ((and (equal (allow-lock self) "x") (value self))
      (nth num-out (value self)))
     ;((and (equal (allow-lock self) "o") (reference self))) ; => OM 4 
@@ -206,30 +219,89 @@
  )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; OM-DRAW-CONTENTS - "?" - NONDETERMINISTIC PATCH
+;;; OMLispPatch
 
-#|
-(defmethod om-draw-contents :after ((self patch-finder-icon)) ; maybe not needed
-  (when (non-deter-patch? (object (om-view-container self)))
-      (om-with-fg-color self *om-pink-color*
-		  (if (= (presentation (editor *om-workspace-win*)) 0) ;do not update size when the patch is inside folders
-              (om-with-font (om-make-font "Courier" 34)
-               (om-draw-char (- (round (w self) 2) 10) (+ (round (h self) 2) 10) #\?))
-               (om-with-font (om-make-font "Courier" 22)
-                (om-draw-char (- (round (w self) 2) 6) (+ (round (h self) 2) 6) #\?))
-	))))
-|#
+(defmethod compile-before-close ((self patch-lambda-exp-window))
+ (handler-bind ((error #'(lambda (c) 
+                           (declare (ignore c))
+                           (setf *patch-definition-aborted* 
+                                 (string+ "Error in function definition: " 
+                                          (om-report-condition c) 
+                                          ".~%~%Close editor anyway?~%(No modification will be made to the patch)."))
+                           )))
+ (let* ((expression (om-get-lisp-expression self)))
+   (unless (lambda-expression-p expression)
+     (setf *patch-abort-definition* "Error in lambda expression.~%Lambda expressions are of the form (lambda <param-list> <body>).~%~%Close editor anyway?~%(No modification will be made to the patch)."))
+   (unless *patch-abort-definition*
+     ;(setf (lisp-exp-p (patchref self)) expression)
+     (setf (lisp-exp (patchref self)) (om-get-text self))
+     (eval `(screamer::defun ,(intern (string (code (patchref self))) :om)
+                   ,.(cdr (get-lisp-exp (lisp-exp (patchref self))))))
+     ))))
+	 
+ (defmethod compile-without-close ((self patch-lambda-exp-window))
+ (let* ((expression (om-get-lisp-expression self)))
+  (unless (lambda-expression-p expression)
+    (om-message-dialog (string+ "Error! The expression in the Lisp patch" (name (patchref self)) " is not a valid lambda expression. 
+ Lambda expression are of the form (lambda <param-list> <body>)"))
+    (om-abort))
+  (unless (equal (get-lisp-exp (lisp-exp (patchref self))) expression)
+    ;;;(setf (lisp-exp-p (patchref self)) expression)
+    (setf (lisp-exp (patchref self)) (om-get-text self))
+   (compile-lisp-patch-screamerfun self)
+   ;(compile-lisp-patch-fun self)
+    (loop for item in (attached-objs (patchref self)) do
+          (update-from-reference item)))
+  (setf (compiled? (patchref self)) t)))	
 
-(defmethod om-draw-contents :after ((self patch-icon-box))
-  (when (non-deter-patch? (reference (object (om-view-container self))))
-   (om-with-fg-color self *om-pink-color*
-    (om-with-font (om-make-font "Courier" (* *icon-size-factor* 34))
-      (om-draw-char (- (round (w self) 2) (* *icon-size-factor* 10)) 
-		    (+ (round (h self) 2) (* *icon-size-factor* 10)) 
-                    #\?)))))
+(defun compile-lisp-patch-screamerfun (patch)
+(if (get-lisp-exp (lisp-exp patch))
+ (eval `(screamer::defun ,(intern (string (code patch)) :om)
+               ,.(cdr (get-lisp-exp (lisp-exp patch)))))
+(eval `(screamer::defun ,(intern (string (code patch)) :om) () nil))))
+
+(defmethod compile-patch ((self OMLispPatch)) 
+"Generation of lisp code from the graphic boxes."
+(unless (compiled? self)
+(handler-bind 
+   ((error #'(lambda (err)
+               (capi::display-message "An error of type ~a occurred: ~a" (type-of err) (format nil "~A" err))
+               (abort err))))
+   (compile-lisp-patch-screamerfun self)
+   ;(compile-lisp-patch-fun self)
+ (setf (compiled? self) t))
+))
+
+(defmethod omNG-copy ((self OMLispPatch))
+`(let ((copy ,(call-next-method)))
+    (setf (lisp-exp copy) (lisp-exp ,self))
+    (compile-lisp-patch-screamerfun copy)
+   copy))
+ 
+(defmethod om-save ((self OMLispPatchAbs) &optional (values? nil))
+  "Generation of code to save 'self'."
+  `(om-load-lisp-abs-nondeterpatch ,(name self) ,*om-version* ,(str-without-nl (lisp-exp self))))
+
+(defun om-load-lisp-abs-nondeterpatch (name version expression)
+ (let ((newpatch (make-instance 'OMLispPatchAbs :name name :icon 123)))
+   (setf (omversion newpatch) version)
+   (setf (lisp-exp newpatch) (get-lisp-str expression))
+   (compile-lisp-patch-screamerfun newpatch)
+   newpatch))
+
+(defmethod get-patch-inputs ((self OMLispPatch))
+ (unless (compiled? self)
+   (compile-lisp-patch-screamerfun self))
+ (let* ((args (arglist (intern (string (code self)) :om)))
+        (numins (min-inp-number-from-arglist args)) (i -1))
+   (mapcar #'(lambda (name) 
+               (make-instance 'omin
+                              :indice (incf i)
+                              :name (string name))) 
+           (subseq args 0 numins))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
-;;; TODO - OMLOOP - OMLISPPATCH
+;;; TODO - OMLOOP
 
 		 
 
