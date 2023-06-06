@@ -299,7 +299,7 @@
                               :indice (incf i)
                               :name (string name))) 
            (subseq args 0 numins))))
-
+#|
 ;;; save.lisp
 (defun load-obj-from-obj (object)
  (if (or (loaded? object)
@@ -324,6 +324,7 @@
    (setf *om-current-persistent* nil)
    object) 
       'dead))))
+|#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
 ;;; TODO - OMLOOP
