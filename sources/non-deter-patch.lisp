@@ -311,5 +311,131 @@
                               :name (string name))) 
            (subseq args 0 numins))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;  
 ;;; TODO - OMLOOP
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; CODE FROM OMLOOP.LISP => OM 7.2  
+#|
+;screamer
+(defmethod call-gen-code ((self omloop-box) numout)
+   (let ((in-list (mapcar #'(lambda (thein) (gen-code thein 0)) (inputs self))))
+     (if (zerop numout) 
+       `(,(intern (string (first (code (patch self)))) :om) ,.in-list)
+       `(nth ,numout (multiple-value-list (,(intern (string (first (code (patch self)))) :om) ,.in-list))))))
+	   
+;screamer
+(defmethod gen-code-call ((self omloop-box) &optional args)
+  (let ((in-list (mapcar #'(lambda (thein) (gen-code thein 0)) (inputs self))))
+    `(,(intern (string (first (code (patch self)))) :om) ,.in-list)))
+	
+;screamer
+(defmethod special-lambda-value ((self omloop-box) symbol)
+   "Eval a loop box in lambda mode."
+   (let* ((nesymbs nil)
+          (args  (mapcar #'(lambda (input)
+                             (if (connected? input)
+                               `',(omNG-box-value  input)
+                               (let ((newsymbol (gensym)))
+                                 (push newsymbol nesymbs)
+                                 newsymbol))) (inputs self))))
+     (if (null nesymbs)
+       symbol
+       (eval `#'(lambda ,(reverse nesymbs)
+                  (apply (fdefinition ',(intern (string (first (code (patch self)))) :om)) (list ,.args)))))))
+				  
+;screamer
+(defmethod curry-lambda-code ((self omloop-box) symbol)
+"Lisp code generation for a loop box in lambda mode."
+(let* ((nesymbs nil)
+       (oldlambdacontext *lambda-context*))
+
+  (setf *lambda-context* t)
+
+  (unwind-protect
+      (let ((args  (mapcar #'(lambda (input)
+                               (if (connected? input)
+                                   (gen-code input 0)
+                                 (let ((newsymbol (gensym)))
+                                   (push newsymbol nesymbs)
+                                   newsymbol))) (inputs self))))
+        (if (null nesymbs)
+            symbol
+          `#'(lambda ,(reverse nesymbs)
+               (apply (fdefinition ',(intern (string (first (code (patch self)))) :om)) (list ,.args)))))
+
+    (setf *lambda-context* oldlambdacontext))
+  ))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;; CODE FROM PATCHBOXES.LISP => OM 7.2  
+
+;screamer
+(defmethod gen-code ((self OMBoxPatch) numout)
+ (let ((patchfun `,(intern (string (code (reference self))) :om)))
+   (cond
+    ((equal (allow-lock self) "&") 
+     (gen-code-for-ev-once self numout))
+    ((equal (allow-lock self) "l")
+     (curry-lambda-code self  patchfun))
+    ((equal (allow-lock self) "o")  (reference self))
+    ((equal (allow-lock self) "x") 
+     `(nth ,numout ,(gen-code (value self) 0)))
+    (t
+     (if (zerop numout)
+       `(,patchfun ,.(decode self))
+       `(nth ,numout (multiple-value-list (,patchfun ,.(decode self)))))))))
+		   
+ |#	
+ 
+ ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+ ;;;; CODE FROM OMLOOP.LISP => OM 4 (DISABLED)
+ 
+ ;;screamer
+ ;(defmethod special-value ((self OMLoop-Box) &optional (args nil))
+ ;   (let* (non-deter?)
+ ;     (unless (compiled? (patch self)) 
+ ;       (compile-patch (patch self))
+ ;       (setf (compiled? (patch self)) t))
+ ;     (setf non-deter? (non-deter-patch? (patch self)))
+ ;     (if non-deter?
+ ;       (case *screamer-valuation*
+ ;         (0 (eval `(s::one-value (,(intern (string (first (code (patch self)))) :om) ,.args))))
+ ;         (1 (eval `(s::all-values (,(intern (string (first (code (patch self)))) :om) ,.args))))  
+ ;         (2 (eval `(s::print-values (,(intern (string (first (code (patch self)))) :om) ,.args)))))
+ ;       (apply (fdefinition (intern (string (first (code (patch self)))) :om)) args)))) 
+
+ ;;screamer
+ ;(defmethod compile-patch ((self patchForLoop))
+ ;   "Code generates by Loop patches is generate by this method."
+ ;   (let* ((boxes (boxes self))
+ ;          (oldletlist *let-list*)
+ ;          (*let-list* nil)
+ ;          (do-box (car (find-class-boxes boxes 'OMLoopDo)))
+ ;          (final-box (car (find-class-boxes boxes 'OMFinalDo)))
+ ;          (in-boxes (sort (find-class-boxes boxes 'OMin) '< :key 'indice))
+ ;          (symbols (mapcar #'(lambda (thein) (setf (in-symbol thein) (gensym))) in-boxes))
+ ;          (loop-boxes (find-loop-boxes boxes))
+ ;          (loop-code (mapcan #'(lambda (theout)
+ ;                                 (loop-gen-code theout 0)) loop-boxes))
+ ;          (acum-boxes (find-acum-boxes boxes))
+ ;          (acum-declaration (mapcar #'(lambda (acumm)
+ ;                                        (declare-closure acumm)) acum-boxes))
+ ;          (acum-inits (mapcar #'(lambda (acumm)
+ ;                                  (gen-code acumm -1)) acum-boxes))
+ ;          body)
+ ;     (setf body (gen-code do-box 0))
+ ;     (eval `(screamer::defun ,(intern (string (first (code self))) :om)  (,.symbols) 
+ ;              (let (,.acum-declaration) ,.acum-inits
+ ;                   (loop ,.loop-code 
+ ;                         finally (return (values ,.(loop for i from 0 to (- (length (inputs final-box)) 1)
+ ;                                                         collect  (gen-code final-box i)))) do
+ ;                         (let* ,*let-list*
+ ;                           ,body)))))
+ ;     (setf *let-list* oldletlist)))
+
+ ;;screamer
+ ;(defmethod draw-after-box ((self loopBoxFrame))
+ ;   (with-fore-color 16719095
+ ;     (when (non-deter-patch? (patch (object self)))
+ ;       (#_Textsize 28)
+ ;       (draw-char (- (round (w self) 2) 8) (+ (round (h self) 2) 6) #\? ))))	
