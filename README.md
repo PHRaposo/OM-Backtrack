@@ -6,6 +6,6 @@ THIS PROJECT ALSO AIMS TO EXPAND SCREAMER POSSIBILITIES WITH SCREAMER-PLUS (SEE 
 
 THE SCREAMER PACKAGE ITSELF WAS NOT INCLUDED HERE SINCE IT'S ALREADY AVAILABLE IN OM (FROM MATHTOOLS).
 
-Original Tutorial Page (by Charlotte Tuchet): http://recherche.ircam.fr/equipes/repmus/OpenMusic/user-doc/DocFiles/backtrackTutorial/ .
+ORIGINAL TUTORIAL PAGE (BY CHARLOTTE TRUCHET): http://recherche.ircam.fr/equipes/repmus/OpenMusic/user-doc/DocFiles/backtrackTutorial/ .
 
 ![alt text](https://github.com/PHRaposo/OM-Screamer/blob/main/screenshot.png?raw=true)
