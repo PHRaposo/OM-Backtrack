@@ -178,7 +178,7 @@
 )	
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; SPECIAL-LAMBDA-VALUE / CURRY-LAMBDA-CODE
+;;; SPECIAL-LAMBDA-VALUE / CURRY-LAMBDA-CODE ;====> CONFLICT WITH "APPLY-CONT" FUNCTION
 ;;; => ADAPTED FROM OMLOOP <= ;;;
 #|		 
 ;screamer
