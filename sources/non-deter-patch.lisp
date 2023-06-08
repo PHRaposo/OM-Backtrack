@@ -39,16 +39,22 @@
                             (om-abort)))))
    (cond
     ((and (equal (allow-lock self) "l") 
-	     (non-deter-patch? (reference self))
-	     (lisp-exp-p (reference self)))       
-	      (om-message-dialog "Nondeterministic lisp patches in lambda mode has not been implemented yet.")
-              (clear-after-error self)
-              (om-abort))
+	  (non-deter-patch? (reference self))
+	  (lisp-exp-p (reference self)))       
+	   (om-message-dialog "Nondeterministic lisp patches in lambda mode has not been implemented yet.")
+           (clear-after-error self)
+           (om-abort))
 	   
-   ((and (equal (allow-lock self) "l") (non-deter-patch? (reference self)))
-    	  (om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
-          (clear-after-error self)
-          (om-abort))
+   ((and (equal (allow-lock self) "l") 
+	 (non-deter-patch? (reference self)))
+    
+         (let ((compiled-screamer-patchfun (screamer-patch-code (reference self))))
+          (special-lambda-value self (intern (string compiled-screamer-patchfun) :om))))   	  
+    
+         ;(om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
+         ;(clear-after-error self)
+         ;(om-abort))
+    
          ;compile-patch ???
          ;(setf (value self) ??? (list 
    	 ;(special-lambda-value self (intern (string (code (reference self))) :om))) ;)
@@ -168,12 +174,17 @@
                                  (2 (s::print-values  ,. (mapcar #'(lambda (theout)
 			           			(gen-code theout 0)) out-box)))))
   (setf screamer-patchfun `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
-                            (let* ,(reverse *let-list*) ,body)))		
+                            (let* ,(reverse *let-list*) ,body)))
+      
+  (compile (eval screamer-patchfun)) ;===> compile-eval function     
                   
   (setf *let-list* oldletlist)
-  (setf *lambda-context* oldlambdacontext)   
+  (setf *lambda-context* oldlambdacontext) 
+      
+  out-symb ;===> returns the function name  
 
-  screamer-patchfun ;===> returns the function code	
+  ;screamer-patchfun ;===> returns the function code
+      
  ))) 
 )	
 
