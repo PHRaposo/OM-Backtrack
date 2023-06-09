@@ -49,7 +49,9 @@
 	 (non-deter-patch? (reference self)))
     
          (let ((compiled-screamer-patchfun (screamer-patch-code (reference self))))
-          (special-lambda-value self (intern (string compiled-screamer-patchfun) :om))))   	  
+          (setf (value self) 
+           (list (special-lambda-value self (intern (string compiled-screamer-patchfun) :om))))
+          (car (value self))))   	  
     
          ;(om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
          ;(clear-after-error self)
