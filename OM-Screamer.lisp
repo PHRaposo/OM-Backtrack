@@ -15,8 +15,7 @@
 (setf  *screamer-files* (list 
                          (om::om-relative-path '("sources") "om-preferences")
 			 (om::om-relative-path '("sources") "screamboxes")
-                         (om::om-relative-path '("sources") "screamfuns")
-                         (om::om-relative-path '("sources") "additional-screamfuns")			 
+                         (om::om-relative-path '("sources") "screamfuns")			 
                          (om::om-relative-path '("sources") "screaminterface")
 			 (om::om-relative-path '("sources") "non-deter-patch")
                          ;(om::om-relative-path '("sources" "constraints") "constraint")
