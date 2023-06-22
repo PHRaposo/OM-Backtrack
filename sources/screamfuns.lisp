@@ -98,7 +98,8 @@
 
 (defmethod get-boxcallclass-fun ((self (eql 'an-integer-between))) 'screamerboxes)
 (defmethod! an-integer-between  ((low integer) (high integer))
-   :initvals '(0 10) :indoc '("low value" "high value")
+   :initvals '(0 10) 
+   :indoc '("low value" "high value")
    :doc "Defines a Screamer variable, in the interval [low high]. 
 Without constraints, an-integer-between enumerates all the integers between low and high.
 
@@ -114,8 +115,9 @@ an integer between low and high. The value depends on the backtracking caused by
    (s:an-integer-between low high))
 
 (defmethod get-boxcallclass-fun ((self (eql 'a-member-of))) 'screamerboxes)
-(defmethod! a-member-of  ((list list))
-   :initvals '(a b c d) :indoc '("list of possible values")
+(defmethod! a-member-of  ((lst list))
+   :initvals '((a b c d)) 
+   :indoc '("list of possible values")
    :doc "Defines a Screamer variable, in the list of values
 Without constraints, an-member-of enumerates all the values of the list.
 
@@ -126,7 +128,7 @@ Output:
 a value of the list. The value depends on the backtracking caused by the constraints
 "
    :icon 486
-   (s:a-member-of list))
+   (s:a-member-of lst))
 
 (defun appc (fun variables)
   (apply 
@@ -137,8 +139,9 @@ a value of the list. The value depends on the backtracking caused by the constra
    (list variables))
   variables)
 
-(defmethod!  apply-cont ((fun function) var)  
-  :indoc '("Constraint in lambda-mode" "Variables") 
+(defmethod!  apply-cont ((fun function) (var om::t))  
+  :indoc '("Constraint in lambda-mode" "Variables")
+  :initvals '(nil nil) 
   :icon 486
   :doc "Applies the constraint (patch in lambda-mode) to the variables
 
@@ -156,8 +159,10 @@ Else, apply-cont causes backtrack.
 "
   (appc fun var))
 
-(defmethod!  apply-cont ((funs list) var)  
-  :indoc '("List of constraints in lambda-mode" "Variables") :icon 486
+(defmethod!  apply-cont ((funs list) (var om::t))  
+  :indoc '("List of constraints in lambda-mode" "Variables")
+  :initvals '(nil nil)
+  :icon 486
   (loop for fun in funs
         do
         (appc fun var))
@@ -248,8 +253,8 @@ The value depends on the backtracking caused by the constraints"
         ((member (car l) (cdr l) :test #'equal) nil)
         (t (alldiff2 (cdr l)))))
 
-(defmethod! alldiff? (l)
-  :initvals 'nil
+(defmethod! alldiff? ((l list))
+  :initvals '(nil)
   :indoc '("a list")
   :doc "True iff all the values of the list are different
 Input : a list
@@ -265,8 +270,8 @@ Output : nil if the list contains the same value twice
         ((>= (car l) (cadr l)) nil)
         (t (croissante (cdr l)))))
 
-(defmethod! growing? (l)
-  :initvals 'nil
+(defmethod! growing? ((l list))
+  :initvals '(nil)
   :indoc '("a list")
   :doc "True iff all the list is growing
 Input : a list
