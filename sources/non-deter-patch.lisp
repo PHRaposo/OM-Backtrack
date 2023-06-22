@@ -254,6 +254,66 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; OMLispPatch
 
+(defvar *om-screamerfuns* ;SCREAMER FUNCTIONS
+ (list 'screamer::one-value
+	'screamer::all-values
+	'screamer::print-values
+	'screamer::a-boolean
+	'screamer::an-integer
+	'screamer::an-integer-above
+	'screamer::an-integer-below
+	'screamer::an-integer-between
+	'screamer::a-member-of
+	'screamer::boolean
+	'screamer::booleanp
+	'screamer::make-variable
+	'screamer::numberpv
+	'screamer::realpv
+	'screamer::integerpv
+	'screamer::booleanpv
+	'screamer::memberv
+	'screamer::assert!
+	'screamer::=v
+	'screamer::<v
+	'screamer::<=v
+	'screamer::>v
+	'screamer::>=v
+	'screamer::/=v
+	'screamer::a-booleanv
+	'screamer::an-integerv
+	'screamer::an-integer-abovev
+	'screamer::an-integer-belowv
+	'screamer::an-integer-betweenv
+	'screamer::a-realv
+	'screamer::a-real-abovev
+	'screamer::a-real-belowv
+	'screamer::a-real-betweenv
+	'screamer::a-numberv
+	'screamer::a-member-ofv
+	'screamer::notv
+	'screamer::andv
+	'screamer::orv
+	'screamer::+v
+	'screamer::-v
+	'screamer::*v
+	'screamer::/v
+	'screamer::minv
+	'screamer::maxv
+	'screamer::funcallv
+	'screamer::applyv
+	'screamer::equalv
+	'screamer::linear-force
+	'screamer::divide-and-conquer-force
+	'screamer::static-ordering
+	'screamer::domain-size
+	'screamer::range-size
+	'screamer::reorder
+	'screamer::solution))
+
+(defun screamer-symb? (x)
+ (or (not (null (find-symbol (string x) :screamer)))))
+    ;(not (null (find-symbol (string x) :screamer+))))) 
+
 (defmethod compile-before-close ((self patch-lambda-exp-window))
  (handler-bind ((error #'(lambda (c) 
                            (declare (ignore c))
@@ -268,11 +328,18 @@
    (unless *patch-abort-definition*
      ;(setf (lisp-exp-p (patchref self)) expression)
      (setf (lisp-exp (patchref self)) (om-get-text self))
-     (eval `(screamer::defun ,(intern (string (code (patchref self))) :om)
+     (let* ((exp (cdr (get-lisp-exp (lisp-exp (patchref self)))))
+            (symbols  (loop for x in (remove nil (flat exp)) 
+                                if (and (symbolp x) (screamer-symb? x)) collect x))
+              (scream?  (remove-if-not (lambda (x) (member x *om-screamerfuns*)) symbols)))
+  (if scream?
+ (eval `(screamer::defun ,(intern (string (code (patchref self))) :om)
                    ,.(cdr (get-lisp-exp (lisp-exp (patchref self))))))
-     ))))
-	 
- (defmethod compile-without-close ((self patch-lambda-exp-window))
+     (eval `(defun ,(intern (string (code (patchref self))) :om)
+                   ,.(cdr (get-lisp-exp (lisp-exp (patchref self)))))))))
+     )))
+
+(defmethod compile-without-close ((self patch-lambda-exp-window))
  (let* ((expression (om-get-lisp-expression self)))
   (unless (lambda-expression-p expression)
     (om-message-dialog (string+ "Error! The expression in the Lisp patch" (name (patchref self)) " is not a valid lambda expression. 
@@ -281,8 +348,13 @@
   (unless (equal (get-lisp-exp (lisp-exp (patchref self))) expression)
     ;;;(setf (lisp-exp-p (patchref self)) expression)
     (setf (lisp-exp (patchref self)) (om-get-text self))
+     (let* ((exp (cdr (get-lisp-exp (lisp-exp (patchref self)))))
+            (symbols  (loop for x in (remove nil (flat exp)) 
+                                if (and (symbolp x) (screamer-symb? x)) collect x))
+              (scream?  (remove-if-not (lambda (x) (member x *om-screamerfuns*)) symbols)))
+  (if scream?
    (compile-lisp-patch-screamerfun self)
-   ;(compile-lisp-patch-fun self)
+   (compile-lisp-patch-fun self)))
     (loop for item in (attached-objs (patchref self)) do
           (update-from-reference item)))
   (setf (compiled? (patchref self)) t)))	
@@ -300,31 +372,60 @@
    ((error #'(lambda (err)
                (capi::display-message "An error of type ~a occurred: ~a" (type-of err) (format nil "~A" err))
                (abort err))))
+     (let* ((exp (cdr (get-lisp-exp (lisp-exp self))))
+             (symbols  (loop for x in (remove nil (flat exp)) 
+                                if (and (symbolp x) (screamer-symb? x)) collect x))
+              (scream?  (remove-if-not (lambda (x) (member x *om-screamerfuns*)) symbols)))
+  (if scream?
    (compile-lisp-patch-screamerfun self)
-   ;(compile-lisp-patch-fun self)
+   (compile-lisp-patch-fun self)))
  (setf (compiled? self) t))
 ))
 
 (defmethod omNG-copy ((self OMLispPatch))
 `(let ((copy ,(call-next-method)))
     (setf (lisp-exp copy) (lisp-exp ,self))
+     (let* ((exp (cdr (get-lisp-exp (lisp-exp copy))))
+             (symbols  (loop for x in (remove nil (flat exp)) 
+                                if (and (symbolp x) (screamer-symb? x)) collect x))
+              (scream?  (remove-if-not (lambda (x) (member x *om-screamerfuns*)) symbols)))
+  (if scream?
     (compile-lisp-patch-screamerfun copy)
+    (compile-lisp-patch-fun copy)))
    copy))
  
 (defmethod om-save ((self OMLispPatchAbs) &optional (values? nil))
   "Generation of code to save 'self'."
-  `(om-load-lisp-abs-nondeterpatch ,(name self) ,*om-version* ,(str-without-nl (lisp-exp self))))
+     (let* ((exp (cdr (get-lisp-exp (lisp-exp self))))
+             (symbols  (loop for x in (remove nil (flat exp)) 
+                                if (and (symbolp x) (screamer-symb? x)) collect x))
+              (scream?  (remove-if-not (lambda (x) (member x *om-screamerfuns*)) symbols)))
+  (if scream?
+  `(om-load-lisp-abs-nondeterpatch ,(name self) ,*om-version* ,(str-without-nl (lisp-exp self)))
+  `(om-load-lisp-abspatch ,(name self) ,*om-version* ,(str-without-nl (lisp-exp self))) )))
 
 (defun om-load-lisp-abs-nondeterpatch (name version expression)
  (let ((newpatch (make-instance 'OMLispPatchAbs :name name :icon 123)))
    (setf (omversion newpatch) version)
    (setf (lisp-exp newpatch) (get-lisp-str expression))
+     (let* ((exp (cdr (get-lisp-exp (lisp-exp newpatch))))
+             (symbols  (loop for x in (remove nil (flat exp)) 
+                                if (and (symbolp x) (screamer-symb? x)) collect x))
+              (scream?  (remove-if-not (lambda (x) (member x *om-screamerfuns*)) symbols)))
+  (if scream?
    (compile-lisp-patch-screamerfun newpatch)
+   (compile-lisp-patch-fun newpatch))) 
    newpatch))
 
 (defmethod get-patch-inputs ((self OMLispPatch))
  (unless (compiled? self)
-   (compile-lisp-patch-screamerfun self))
+     (let* ((exp (cdr (get-lisp-exp (lisp-exp self))))
+             (symbols  (loop for x in (remove nil (flat exp)) 
+                                if (and (symbolp x) (screamer-symb? x)) collect x))
+              (scream?  (remove-if-not (lambda (x) (member x *om-screamerfuns*)) symbols)))
+  (if scream?
+   (compile-lisp-patch-screamerfun self)
+   (compile-lisp-patch-fun self))))
  (let* ((args (arglist (intern (string (code self)) :om)))
         (numins (min-inp-number-from-arglist args)) (i -1))
    (mapcar #'(lambda (name) 
