@@ -92,7 +92,22 @@
                                           :di-action (om-dialog-item-act item
                                                        (om-return-from-modal-dialog dialog t))
                                           :default-button t))
+   (if (scoreeditor-p value) 
+      (cond
+       ((equal (class-name (class-of value)) 'poly)
+          (let* ((voices (voices value))
+                 (staves (mapcar #'correct-listener-staff voices)))
+          (progn (change-select-system (panel (editor dialog)) voices staves)  
+                 (non-deter-modal-dialog dialog))))
+        ((equal (class-name (class-of value)) 'multi-seq)
+          (let* ((chord-seqs (chord-seqs value))
+                 (staves (mapcar #'correct-listener-staff chord-seqs)))
+          (progn (change-select-system (panel (editor dialog)) chord-seqs staves)  
+                 (non-deter-modal-dialog dialog))))
+       (t (progn (change-system (panel (editor dialog)) (correct-listener-staff value)) 
+                 (non-deter-modal-dialog dialog))))     
     (non-deter-modal-dialog dialog)
+    )   
     ))
 
 ;;;(non-determinise-listener 0)
@@ -104,6 +119,46 @@
  (capi::display-dialog dialog))
   ;:owner (or owner (om-front-window) (capi:convert-to-screen)) 
   ;                        :position-relative-to :owner :x (vx dialog) :y (vy dialog)))
+
+(defun correct-listener-staff (value)
+ (let ((class-of-value (class-name (class-of value))))
+ (cond 
+  ((equal class-of-value 'note)
+     (let ((midics (midic value)))
+      (get-staff-from-midics midics)))
+
+  ((or (equal class-of-value 'chord) 
+         (equal class-of-value 'chord-seq))
+     (let ((midics (lmidic value)))
+       (get-staff-from-midics midics)))
+
+   ((equal class-of-value 'voice)
+     (let ((midics (mapcar #'lmidic (chords value))))
+      (get-staff-from-midics midics)))
+
+  (t (progn (om-message-dialog "?") (om-abort)))))) 
+            
+(defun get-staff-from-midics (midics)
+ (cond 
+  ((numberp midics)
+     (cond ((< midics 3600) 'ff)
+                ((< midics 6000) 'f)
+                ((<= midics 8400) 'g)
+                (t 'gg)))
+ (t (let ((midic-min (list-min (flat midics)))
+           (midic-max (list-max (flat midics))))
+     (cond 
+      ((< midic-min 3600)
+       (cond ((< midic-max 5500) 'ff)
+                 ((<= midic-max 8400) 'gff)
+                 (t 'ggff)))
+
+     ((< midic-min 5500)
+      (cond ((<= midic-max 6400) 'f)
+                ((<= midic-max 8400) 'gf)
+                (t 'ggf)))
+
+   (t (if (<= midic-max 8400) 'g 'gg)))))))
 
 (in-package :s)
 (defmacro-compile-time print-values (&body forms)
