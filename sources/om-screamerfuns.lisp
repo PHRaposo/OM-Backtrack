@@ -369,17 +369,18 @@ but the larger jump has to be below the smaller one."
 ; -----------------------------------------
 ; APPLY-CONTV
 
-(om::defmethod! apply-contv ((cs function) (vars t) (mode string) (recursive? string))  
-  :initvals '(nil nil "atom" "off") 
-  :indoc '("patch in lambda mode" "list of variables" "string" "string") 
-  :menuins '((2 (("atom" "atom") ("list" "list")))
-                   (3 (("off" "off") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr")))
-                  )
+(om::defmethod! apply-contv ((cs function) (mode string) (recursive? string) (vars t) &rest args)  
+  :initvals '(nil "atom" "off" nil) 
+  :indoc '("patch in lambda mode" "string" "string" "list of variables" ) 
+  :menuins '((1 (("atom" "atom") ("list" "list")))
+             (2 (("off" "off") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr"))))
   :doc "Applies constraint recursively to list of variables."
   :icon 487
 
-  (cond ((equal mode "atom") (om?::deep-mapcar cs cs vars))
-                                
+  (cond ((equal mode "atom") 
+             (if args (om?::deep-mapcar cs cs vars args)
+                      (om?::deep-mapcar cs cs vars)))
+                           
             ((equal mode "list") 
              (cond 
 
@@ -387,9 +388,11 @@ but the larger jump has to be below the smaller one."
              (om?::apply-rec cs vars))
 
              ((equal recursive? "car-cdr") 
-             (om?::funcallv-rec-car-cdr cs vars))
+              (om?::funcallv-rec-car-cdr cs vars))
 
-             (t (om?::less-deep-mapcar cs vars))))
+             (t (if args (om?::less-deep-mapcar cs vars args)
+                         (om?::less-deep-mapcar cs vars))
+            )))
 
            (t (progn (om-message-dialog "ERROR!") (om-abort)))))
 
