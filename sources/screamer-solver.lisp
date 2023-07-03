@@ -14,21 +14,21 @@
     :initvals '(nil nil nil nil "one-value" "static-ordering linear-force" nil)
 
     :indoc '("variable or list" "propagation-variables<lambda-patch>" "constraint<lambda-patch> or list" 
-		     "propagation-constraints<lambda-patch>" "one-value, all-values, listener or n-values" "ordering-force-functions" "symbol or list")
+		     "propagation-constraints<lambda-patch>" "one-value, all-values, listener, n-values or ith-value" "ordering-force-functions" "symbol or list")
 
     :doc "Screamer Constraint Solver
   <VARIABLES> variable or list of variables.
   <P-VARIABLES> lambda patch or list of lambda patches. Generates a new-list of variables.
   <CONSTRAINTS> lambda patch or list of lambda patches => constraint to variables.
   <P-CONSTRAINTS> lambda patch or list of lambda patches => constraints to propagation variables.
-  <SCREAMER-VALUATION> menuin with four options (one-value, all-values, listener or n-values).
+  <SCREAMER-VALUATION> menuin with four options (one-value, all-values, listener, n-values or ith-value).
   <FORCE-FUNCTION> a string or should be connected to force-function.  
   <OUTPUT> symbol :all or nil or list with symbols or positions. Ex: (nil :all) or ((0 2) (1 3))." 
 
     :menuins '((4 (("one-value" "one-value") 
                            ("all-values" "all-values") 
                            ("listener" "listener")
-                           ("n-values" '("n-values" 10))
+                           ("n-values" '("n-values" 10)) ("ith-value" '("ith-value" 10))
 )))                        
     :icon 487 
 
@@ -131,27 +131,50 @@
                                         ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
                                         (t #'s::linear-force)))))))))
 
-                  (t (om?::n-values (second screamer-valuation) ;N-VALUES
+                  (t (if (equal (first screamer-valuation) "n-values")
+		   (om?::n-values (second screamer-valuation) ;N-VALUES
                    (select-solution variables propagation-variables output
                     (s::solution (list variables propagation-variables)
                       (cond ((equal force-function "static-ordering linear-force") (s::static-ordering #'s::linear-force))
-                                ((equal force-function "static-ordering divide-and-conquer-force") (s::static-ordering #'s::divide-and-conquer-force))
-                                (t (s::reorder 
-                                    (cond ((null (second force-function)) #'s::domain-size)
-                                              ((functionp (second force-function)) (second force-function))
-                                              ((equal (second force-function) "domain-size") #'s::domain-size)   
-                                              ((equal (second force-function) "range-size") #'s::range-size)
-                                             (t #'s::domain-size))
-                                    (cond ((null (third force-function)) #'(lambda (x) (declare (ignore x)) nil))
-                                              ((functionp (third force-function)) (third force-function))
-                                              ((equal (third force-function) "(< x 1e-6)") #'(lambda (x) (< x 1e-6)))
-                                              (t #'(lambda (x) (declare (ignore x)) nil)))
-                                   (if (equal (fourth force-function) ">") #'> #'<) 
-                                  (cond ((null (fifth force-function)) #'s::linear-force)
-                                        ((functionp (fifth force-function)) (fifth force-function))
-                                        ((equal (fifth force-function) "linear-force") #'s::linear-force)   
-                                        ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
-                                        (t #'s::linear-force)))))))))
+                            ((equal force-function "static-ordering divide-and-conquer-force") (s::static-ordering #'s::divide-and-conquer-force))
+                            (t (s::reorder 
+                                (cond ((null (second force-function)) #'s::domain-size)
+                                      ((functionp (second force-function)) (second force-function))
+                                      ((equal (second force-function) "domain-size") #'s::domain-size)   
+                                      ((equal (second force-function) "range-size") #'s::range-size)
+                                      (t #'s::domain-size))
+                                (cond ((null (third force-function)) #'(lambda (x) (declare (ignore x)) nil))
+                                      ((functionp (third force-function)) (third force-function))
+                                      ((equal (third force-function) "(< x 1e-6)") #'(lambda (x) (< x 1e-6)))
+                                      (t #'(lambda (x) (declare (ignore x)) nil)))
+                                (if (equal (fourth force-function) ">") #'> #'<) 
+                                (cond ((null (fifth force-function)) #'s::linear-force)
+                                      ((functionp (fifth force-function)) (fifth force-function))
+                                     ((equal (fifth force-function) "linear-force") #'s::linear-force)   
+                                     ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
+                                     (t #'s::linear-force))))))))
+										
+	       (s::ith-value (second screamer-valuation) ;ITH-VALUE
+                (select-solution variables propagation-variables output
+                 (s::solution (list variables propagation-variables)
+                   (cond ((equal force-function "static-ordering linear-force") (s::static-ordering #'s::linear-force))
+                             ((equal force-function "static-ordering divide-and-conquer-force") (s::static-ordering #'s::divide-and-conquer-force))
+                             (t (s::reorder 
+                                 (cond ((null (second force-function)) #'s::domain-size)
+                                           ((functionp (second force-function)) (second force-function))
+                                           ((equal (second force-function) "domain-size") #'s::domain-size)   
+                                           ((equal (second force-function) "range-size") #'s::range-size)
+                                          (t #'s::domain-size))
+                                 (cond ((null (third force-function)) #'(lambda (x) (declare (ignore x)) nil))
+                                           ((functionp (third force-function)) (third force-function))
+                                           ((equal (third force-function) "(< x 1e-6)") #'(lambda (x) (< x 1e-6)))
+                                           (t #'(lambda (x) (declare (ignore x)) nil)))
+                                (if (equal (fourth force-function) ">") #'> #'<) 
+                               (cond ((null (fifth force-function)) #'s::linear-force)
+                                     ((functionp (fifth force-function)) (fifth force-function))
+                                     ((equal (fifth force-function) "linear-force") #'s::linear-force)   
+                                     ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
+                                     (t #'s::linear-force))))))))))										
                  )))
 
   (progn (setf *screamer-valuation* pref-valuation) 
@@ -313,7 +336,7 @@
 (let* ((pref-valuation *screamer-valuation*)
          (n-notes (length (remove-if #'(lambda (x) (< x 0)) (tree2ratio (tree voice-object)))))
          ;attacks - harmonic-slice - etc..
-         (pitch-domain (om?::list-of-members-ofv n-notes (reverse domain))))
+         (pitch-domain (om?::list-of-members-ofv n-notes (reverse domain))));==> RANDOM? om?::list-of-random-members-ofv
 
    (if (listp constraints) 
        (mapcar #'(lambda (cs) (apply cs (list pitch-domain))) constraints)
