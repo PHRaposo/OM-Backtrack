@@ -73,25 +73,6 @@
              (list (a-chord-in (car l) dom)))
             (list-of-chords-in-lcont (cdr l) dom conts))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; NEW SCREAMER FUNCTIONS FOR OM 7
-
-(defun list-of-members-ofv (n dom)
-  (if (zerop n) nil
-      (cons (a-member-ofv dom)
-            (list-of-members-ofv (1- n) dom))))
-
-(defun all-differentv (list)
-   (labels ((all-different (x xs)
-              (if (null xs)
-                  t
-                  (andv (assert!-notv-memberv x xs)
-                        (all-different (car xs) (cdr xs))))))
-     (all-different (car list) (cdr list))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-
 (in-package :om)
 
 (defmethod get-real-funname ((self t)) self)
