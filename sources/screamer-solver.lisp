@@ -14,7 +14,7 @@
     :initvals '(nil nil nil nil "one-value" "static-ordering linear-force" nil)
 
     :indoc '("variable or list" "propagation-variables<lambda-patch>" "constraint<lambda-patch> or list" 
-		     "propagation-constraints<lambda-patch>" "one-value, all-values or print-values" "ordering-force-functions" "symbol or list")
+		     "propagation-constraints<lambda-patch>" "one-value, all-values, listener or n-values" "ordering-force-functions" "symbol or list")
 
     :doc "Screamer Constraint Solver
   <VARIABLES> variable or list of variables.
