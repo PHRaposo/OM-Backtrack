@@ -369,7 +369,7 @@ but the larger jump has to be below the smaller one."
 ; -----------------------------------------
 ; APPLY-CONTV
 
-(om::defmethod! apply-contv ((cs function) (mode string) (recursive? string) (vars t) &rest args)  
+(om::defmethod! apply-contv ((cs function) (mode string) (recursive? string) (vars t))  
   :initvals '(nil "atom" "off" nil) 
   :indoc '("patch in lambda mode" "string" "string" "list of variables" ) 
   :menuins '((1 (("atom" "atom") ("list" "list")))
@@ -378,8 +378,7 @@ but the larger jump has to be below the smaller one."
   :icon 487
 
   (cond ((equal mode "atom") 
-             (if args (om?::deep-mapcar cs cs vars args)
-                      (om?::deep-mapcar cs cs vars)))
+         (om?::deep-mapcar cs cs vars))
                            
             ((equal mode "list") 
              (cond 
@@ -390,9 +389,8 @@ but the larger jump has to be below the smaller one."
              ((equal recursive? "car-cdr") 
               (om?::funcallv-rec-car-cdr cs vars))
 
-             (t (if args (om?::less-deep-mapcar cs vars args)
-                         (om?::less-deep-mapcar cs vars))
-            )))
+             (t (om?::less-deep-mapcar cs vars))
+            ))
 
            (t (progn (om-message-dialog "ERROR!") (om-abort)))))
 
