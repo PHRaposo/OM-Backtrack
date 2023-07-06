@@ -9,12 +9,13 @@
                                                   (p-constraints t) 
                                                   (screamer-valuation t) 
                                                   (force-function t)
-                                                  &optional (output nil)) 
+                                                  &optional (output nil) count-failures? objective-form form2) 
 													  
-    :initvals '(nil nil nil nil "one-value" "static-ordering linear-force" nil)
+    :initvals '(nil nil nil nil "one-value" "static-ordering linear-force" nil nil nil nil)
 
     :indoc '("variable or list" "propagation-variables<lambda-patch>" "constraint<lambda-patch> or list" 
-		     "propagation-constraints<lambda-patch>" "one-value, all-values, listener, n-values or ith-value" "ordering-force-functions" "symbol or list")
+	     "propagation-constraints<lambda-patch>" "one-value, all-values, listener, n-values, ith-value or best-value"
+	     "ordering-force-functions" "symbol or list" "symbol t or nil" "<lambda-patch>"  "<lambda-patch>")
 
     :doc "Screamer Constraint Solver
   <VARIABLES> variable or list of variables.
@@ -23,13 +24,15 @@
   <P-CONSTRAINTS> lambda patch or list of lambda patches => constraints to propagation variables.
   <SCREAMER-VALUATION> menuin with four options (one-value, all-values, listener, n-values or ith-value).
   <FORCE-FUNCTION> a string or should be connected to force-function.  
-  <OUTPUT> symbol :all or nil or list with symbols or positions. Ex: (nil :all) or ((0 2) (1 3))." 
+  <OUTPUT> symbol :all or nil or list with symbols or positions. Ex: (nil :all) or ((0 2) (1 3)).
+  <COUNT-FAILURES?> symbol t or nil.
+  <OBJECTIVE-FORM>and<FORM2>: lambda patches with two inputs (vars / p-vars) -> best-value forms (experimental)." 
 
     :menuins '((4 (("one-value" "one-value") 
-                           ("all-values" "all-values") 
-                           ("listener" "listener")
-                           ("n-values" '("n-values" 10)) ("ith-value" '("ith-value" 10))
-)))                        
+                   ("all-values" "all-values") 
+                   ("listener" "listener")
+                   ("n-values" '("n-values" 10)) ("ith-value" '("ith-value" 10)) ("best-value" "best-value") ))
+	       (7 (("nil" nil) ("t" t))) )                        
     :icon 487 
 
    (let ((pref-valuation *screamer-valuation*)
@@ -58,9 +61,15 @@
           (apply compiled-p-constraints (list propagation-variables))
           (mapcar #'(lambda (cs) (apply cs (list propagation-variables))) compiled-p-constraints))
         (declare (ignore compiled-p-constraints)))
+	
+ (setf s::*count?* count-failures?)
 
+ (setf scs-time (list (get-internal-run-time) (get-internal-real-time)))
+ (print "Timing evaluation of screamer-solver...")
+	
     (let ((solution 
       (cond ((equal screamer-valuation "one-value") ;ONE-VALUE
+	      (s::count-scs-failures
                   (s::one-value 
                    (select-solution variables propagation-variables output
                     (s::solution (list variables propagation-variables)
@@ -81,9 +90,10 @@
                                         ((functionp (fifth force-function)) (fifth force-function))
                                         ((equal (fifth force-function) "linear-force") #'s::linear-force)   
                                         ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
-                                        (t #'s::linear-force)))))))))
+                                        (t #'s::linear-force))))))))))
 
                ((equal screamer-valuation "all-values") ;ALL-VALUES
+		 (s::count-scs-failures
                 (s::all-values 
                    (select-solution variables propagation-variables output
                     (s::solution (list variables propagation-variables)
@@ -104,10 +114,11 @@
                                         ((functionp (fifth force-function)) (fifth force-function))
                                         ((equal (fifth force-function) "linear-force") #'s::linear-force)   
                                         ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
-                                        (t #'s::linear-force)))))))))
+                                        (t #'s::linear-force))))))))))
 
                  ((equal screamer-valuation "listener") ;PRINT-VALUES
                   (setf *screamer-valuation* 2)
+		   (s::count-scs-failures
                      (s::print-values
                        ;;; ===> MAKE-INSTANCE FOR CLASSES  <===
                    (select-solution variables propagation-variables output
@@ -129,9 +140,37 @@
                                         ((functionp (fifth force-function)) (fifth force-function))
                                         ((equal (fifth force-function) "linear-force") #'s::linear-force)   
                                         ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
-                                        (t #'s::linear-force)))))))))
+                                        (t #'s::linear-force))))))))))
+	      
+                 ((equal screamer-valuation "best-value") ;BEST-VALUE (EXPERIMENTAL)
+                   (s::count-scs-failures      
+                   (s::best-value                
+                     (s::solution (list variables propagation-variables)
+                      (cond ((equal force-function "static-ordering linear-force") (s::static-ordering #'s::linear-force))
+                                ((equal force-function "static-ordering divide-and-conquer-force") (s::static-ordering #'s::divide-and-conquer-force))
+                                (t (s::reorder 
+                                    (cond ((null (second force-function)) #'s::domain-size)
+                                              ((functionp (second force-function)) (second force-function))
+                                              ((equal (second force-function) "domain-size") #'s::domain-size)   
+                                              ((equal (second force-function) "range-size") #'s::range-size)
+                                             (t #'s::domain-size))
+                                    (cond ((null (third force-function)) #'(lambda (x) (declare (ignore x)) nil))
+                                              ((functionp (third force-function)) (third force-function))
+                                              ((equal (third force-function) "(< x 1e-6)") #'(lambda (x) (< x 1e-6)))
+                                              (t #'(lambda (x) (declare (ignore x)) nil)))
+                                   (if (equal (fourth force-function) ">") #'> #'<) 
+                                  (cond ((null (fifth force-function)) #'s::linear-force)
+                                        ((functionp (fifth force-function)) (fifth force-function))
+                                        ((equal (fifth force-function) "linear-force") #'s::linear-force)   
+                                        ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
+                                        (t #'s::linear-force))))))
+                        (cond ((not (null form2))
+                                   (apply objective-form (list variables propagation-variables)) 
+                                   (apply form2 (list variables propagation-variables)))
+                           (t (apply objective-form (list variables propagation-variables)))))))	      
 
                   (t (if (equal (first screamer-valuation) "n-values")
+		    (s::count-scs-failures	 
 		   (om?::n-values (second screamer-valuation) ;N-VALUES
                    (select-solution variables propagation-variables output
                     (s::solution (list variables propagation-variables)
@@ -152,8 +191,8 @@
                                       ((functionp (fifth force-function)) (fifth force-function))
                                      ((equal (fifth force-function) "linear-force") #'s::linear-force)   
                                      ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
-                                     (t #'s::linear-force))))))))
-										
+                                     (t #'s::linear-force)))))))))
+	      (s::count-scs-failures								
 	       (s::ith-value (second screamer-valuation) ;ITH-VALUE
                 (select-solution variables propagation-variables output
                  (s::solution (list variables propagation-variables)
@@ -174,13 +213,18 @@
                                      ((functionp (fifth force-function)) (fifth force-function))
                                      ((equal (fifth force-function) "linear-force") #'s::linear-force)   
                                      ((equal (fifth force-function) "divide-and-conquer-force") #'s::divide-and-conquer-force)
-                                     (t #'s::linear-force))))))))))										
+                                     (t #'s::linear-force)))))))))))										
                  )))
-
+	 
+  (print-scs-time scs-time)
+	 
   (progn (setf *screamer-valuation* pref-valuation) 
-             (cond ((atom solution) solution)
-                       ((list-of-listp (first solution)) (mat-trans solution))
-                       (t solution)))
+            (cond ((atom solution) solution)
+                  ((equal screamer-valuation "best-value") 
+                   (x-append (select-solution variables propagation-variables output (first solution))
+                             (second solution))) 
+                   ((list-of-listp (first solution)) (mat-trans solution))
+                   (t solution)))
  )))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -269,6 +313,36 @@
          (if p-variables (list variables p-variables) variables)
      p-variables)))
   (t (progn (om-message-dialog "ERROR: the <OUTPUT> should be a symbol :all or nil, or a list with two symbols [ex. (:all nil)] or a list containing two lists of positions [ex. ((0 2) (1 3))]") (om-abort)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;TIME 
+
+(defun seconds->time (s)
+ (let* ((ms (* s 1000))
+         (ms (mod ms 3600000))
+         (minutes (floor ms 60000))
+         (ms (mod ms 60000))
+         (seconds (floor ms 1000))
+         (ms (round (mod ms 1000))))
+    (format nil "~2,'0d:~2,'0d.~3,'0d"
+            minutes seconds ms)))
+
+(defun print-scs-time (scs-time)
+ (print (format nil 
+" 
+------------------------------------- 
+   User time   =    ~A 
+   Elapsed time   =    ~A 
+------------------------------------- "
+  (seconds->time (float (/ (- (get-internal-run-time) (first scs-time)) internal-time-units-per-second)))
+  (seconds->time (float (/ (- (get-internal-real-time) (second scs-time)) internal-time-units-per-second))))))
+
+;Allocation   =   ~A
+;System time   =   ~A 
+;Page faults   ~A
+;Calls to %EVAL   ~A    
+;GC time   =   ~A 
+;" 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; FORCE-FUNCTION
@@ -371,4 +445,28 @@
                  solution)
       
   )))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; COUNT-SCS-FAILURES
+
+(in-package :s)
+
+(defvar *count?* nil)
+
+(defmacro-compile-time count-scs-failures (&body forms)
+ (let ((values (gensym "VALUES-")))
+   (if *count?*
+    `(let ((failure-count 0))
+       (when-failing ((incf failure-count) 
+        (when (integerp (/ failure-count 1000000)) (print (format nil "Number of failures: ~:d." failure-count)))) 
+         (let ((,values (multiple-value-list (progn ,@forms))))
+            (print (format nil "
+------------------------------------- 
+Failures    =    ~:d
+------------------------------------- " failure-count) )        
+           (values-list ,values))))
+
+     `(let ((,values (multiple-value-list (progn ,@forms))))           
+           (values-list ,values)))))
+
 
