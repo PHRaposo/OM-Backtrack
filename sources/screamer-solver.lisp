@@ -223,7 +223,7 @@
                   ((equal screamer-valuation "best-value") 
                    (x-append (select-solution variables propagation-variables output (first solution))
                              (second solution))) 
-                   ((list-of-listp (first solution)) (mat-trans solution))
+                   ;((list-of-listp (first solution)) (mat-trans solution)) 
                    (t solution)))
  )))
 
