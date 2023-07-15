@@ -45,7 +45,7 @@
 
 (defun list-of-reals-abovev (n min)
   (if (zerop n) nil
-      (cons (an-real-abovev min)
+      (cons (a-real-abovev min)
             (list-of-reals-abovev (1- n) min))))
 
 (defun list-of-reals-belowv (n max)
@@ -59,12 +59,22 @@
             (list-of-numbersv (1- n)))))
 
 (defun list-of-chords-inv (lst1 lst2 &optional random?)
- (let ((v (mapcar #'(lambda (x) 
-             (if random? (list-of-random-members-ofv x lst2) (list-of-members-ofv x lst2))) 
+ (let ((v (mapcar #'(lambda (x)
+             (if random? (list-of-random-members-ofv x lst2) (list-of-members-ofv x (reverse lst2)))) 
             lst1)))
  (mapcar #'(lambda (x) (all-ascendingv x)) v)
  (mapcar #'assert!-all-differentv v)
 (value-of v)))
+
+#| ;TOO SLOW
+(defun list-of-chords-inv-domains (lst1 lst2 &optional random?)
+ (let ((v (if random?
+             (mapcar #'(lambda (x) (list-of-random-members-ofv (length lst1) x)) lst2) 
+             (mapcar #'(lambda (x) (list-of-members-ofv (length lst1) x)) lst2)))) 
+ (mapcar #'(lambda (x) (all-ascendingv x)) v)
+ (mapcar #'assert!-all-differentv v)
+(value-of v)))
+|#
 
 (defun list-of-random-members-ofv (n dom)
   (if (zerop n) nil
@@ -76,12 +86,17 @@
       (cons (an-integer-modv (an-integerv) d)
             (list-of-integers-modv (1- n) d))))
 
+(defun list-of-mcs->pcsv (mcs)
+(mapcar #'a-mc->pcv mcs))
+
+(defun random-test (list)
+  (nthv (funcallv #'random (1- (length list))) list))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; NEW-VARIABLES 
 	
-(defun a-random-member-of (values &optional (name nil name?))
-  (let ((v (if name? (make-variable name) (make-variable))))
-    (assert! (a-member-of v (om::permut-random values)))))
+(defun a-random-member-of (values)
+    (a-member-of (om::permut-random values)))
 
 (defun a-random-member-ofv (values &optional (name nil name?))
   (let ((v (if name? (make-variable name) (make-variable))))
@@ -97,6 +112,12 @@
 (defun a-multiple-of (n1 n2)
 (integerpv (/v n1 n2))) 
 
+(defun an-integer-modv (n d) 
+ (let ((x (an-integerv)))
+   (assert! (andv (>=v x 0) (<v x d)))    
+   (assert! (=v x (-v n (*v d (an-integerv)))))  
+  x))
+
 (defun an-integer-roundv (n) ;&optional (d 1)) 
   (let ((x (an-integer-betweenv (-v (-v n 0.5) 1e-6) (-v (+v n 0.5) 1e-6)))) ;(an-integer-betweenv (-v (-v (/v n d) 0.5) 1e-6) (-v (+v (/v n d) 0.5) 1e-6)))
          ;(rem-x (a-realv))) ;;;FIX-ME ===> REMAINDER (NEGATIVE-NUMBERS)
@@ -107,98 +128,17 @@
 ; N = (* D X + REM-X)
 ; REM-X = N - (* D X)
 
-;;;LISTS 
-
-(defun list-member-of-listspv (list lists)
- (when lists 
-  (ifv (equalv list (carv lists))
-            t
-           (list-member-of-listsv list (cdrv lists)))))
-
-(defun a-list-member-of-listsv (lists)
- (let ((listv (a-listv)))
-(assert! (memberv listv lists))
-(value-of listv)))
+(defun a-mc->pcv (n)
+ (let ((x (an-integerv)))
+  (assert! (=v x (/v (an-integer-modv n 1200) 100)))
+(value-of x)))
 
 (defun first-nv (list n)
-  (cond
-   ((<v (lengthv list) n) list)
-   (t  (funcallv #'butlast list (-v (lengthv list) n)))))
+  (ifv (<v (lengthv list) n) list)
+   (funcallv #'butlast list (-v (lengthv list) n)))
 
 (defun last-nv (list n)
   (funcallv #'last list n))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; PC-SET-THEORY
-
-(defun an-integer-modv (n d) 
- (let ((x (an-integerv)))
-   (assert! (andv (>=v x 0) (<v x d)))    
-   (assert! (=v x (-v n (*v d (an-integerv)))))  
-  x))
-
-(defun list-of-intervals-mod12v (list)
- (mapcarv (lambda (x y)
-  (an-integer-modv (-v y x) 12)) (cdr list) list))  
-
-(defun pc-set-transpositions (prime-form)
- (let ((v (list-of-integers-betweenv (length prime-form) 0 11)))
-(assert! (equalv (list-of-intervals-mod12v v)
-                          (list-of-intervals-mod12v prime-form)))
-(all-values (solution v (static-ordering #'linear-force)))))
-
-(defun a-set-complement-ofv (list)
- (let ((v (list-of-integers-betweenv (-v 12 (length list)) 0 11)))
-(assert! (notv (intersectionv v list)))
-(assert! (apply #'<v v))
-(assert!-all-differentv v)
-(value-of v)))
-
-(defun set-complementv (pcs)
- (one-value (solution (a-set-complement-ofv pcs) (static-ordering #'linear-force))))
-
-(defun pcpv? (list prime-form)
- (let ((pc-sets-list (pc-set-transpositions prime-form)))
-(pcpv?-internal list pc-sets-list)))
-
-(defun pcpv?-internal (list pc-sets-list)
- (when pc-sets-list 
-  (ifv (andv ;(set-equalv (?::members-ofv list) (carv pc-sets-list)) ;;; SLOW
-                   (all-membersv list (carv pc-sets-list))                  
-                   (=v (lengthv (intersectionv (carv pc-sets-list) list))
-                         (lengthv (carv pc-sets-list))))
-             t
-            (pcpv?-internal list (cdrv pc-sets-list)))))
-
-(defun a-transposition-ofv (list pcset)
-  (make-equal list 
-   (mapcar #'(lambda (x) (an-integer-modv x 12))
-    (om+v (an-integer-betweenv 0 11) pcset))))
-
-(defun assert!-pcs (list pcset)
-(assert! (set-equalv (?::members-ofv list)  pcset)))
-
-(defun assert!-pc-setv (list pcset) ;;;SLOW
-  (assert! (apply #'orv 
-                (mapcar #'(lambda (x) (set-equalv (?::members-ofv list) x)) 
-                (pc-set-transpositions pcset)))))
-                                         
-(defun subsetpv? (list prime-form card)
- (let ((pc-sets-list (pc-set-transpositions prime-form)))
-  (subsetpv?-internal list pc-sets-list card)))
-
-(defun subsetpv?-internal (list pc-sets-list card)
- (when pc-sets-list 
-  (ifv (andv (all-membersv list (carv pc-sets-list))
-                      (>=v (lengthv (intersectionv (carv pc-sets-list) list))
-                               card))
-            t
-           (subsetpv?-internal list (cdrv pc-sets-list) card))))
- 
-(defun a-mc->pcv (n)
- (let ((x (an-integerv)))
-  (assert! (=v x (/v (modv-alt n 1200) 100)))
-(value-of x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -251,7 +191,22 @@
 (defun modv (n d) 
  (funcallv #'mod n d))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defun spermut-random (list)
+ (all-values (a-random-member-of list)))
+
+(defun n-random-members (list n)
+ (n-values n (a-random-member-of list)))
+
+(defun spermutations (list)
+(let ((var-list (list-of-members-ofv (length list) (reverse list))))
+(assert!-all-differentv var-list)
+ (all-values (solution var-list (static-ordering #'linear-force)))))
+
+(defun scombinations (list)
+(let ((var-list (list-of-members-ofv (length list) (reverse list))))
+ (all-values (solution var-list (static-ordering #'linear-force)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SCREAMER-CONSTRAINTS
 
 ;;;FORMAT CONSTRAINTS 
@@ -346,39 +301,30 @@ but the larger jump has to be below the smaller one."
            (>=v  mel-diff1 mel-diff2)
            (<=v  mel-diff1 mel-diff2))
         t)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; CONSTRAINTS FOR CHORDS (LIST OF VARIABLES)
+
+(defun symm? (var-list)
+ (let ((int-mod12v (mod12v (x->dxv var-list))))
+(assert! (equalv int-mod12v (reverse int-mod12v)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; OM METHODS 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-; -----------------------------------------
-; PC-SET-THEORY
-
-(om::defmethod pc-setpv? ((vars list) (pc-set list))  
-  :initvals '((nil) (0 4 7)) 
-:indoc '("list of screamer variables => (integers-betweenv 0 11)" "list of integers") 
-  :doc "Constraint a list of Screamer variables <integers-between 0 11> to be all members of the selected pc-set <list of integers>."
-  (pcpv? vars pc-set))
-
-(om::defmethod sub-setpv? ((vars list) (pc-set list) (card integer))  
-  :initvals '((nil) (0 4 7)) 
-:indoc '("list of screamer variables => (integers-betweenv 0 11)" "list of integers" "integer") 
-  :doc "Constraint a list of Screamer variables <integers-between 0 11> to be all subsets of the selected pc-set <list of integers>."
-  (subsetpv? vars pc-set card))
-
-; -----------------------------------------
 ; APPLY-CONTV
 
 (om::defmethod! apply-contv ((cs function) (mode string) (recursive? string) (vars t))  
   :initvals '(nil "atom" "off" nil) 
   :indoc '("patch in lambda mode" "string" "string" "list of variables" ) 
   :menuins '((1 (("atom" "atom") ("list" "list")))
-             (2 (("off" "off") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr"))))
+                   (2 (("off" "off") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr")))
+                  )
   :doc "Applies constraint recursively to list of variables."
   :icon 487
 
   (cond ((equal mode "atom") 
-         (om?::deep-mapcar cs cs vars))
+          (om?::deep-mapcar cs cs vars))
                            
             ((equal mode "list") 
              (cond 
@@ -387,7 +333,7 @@ but the larger jump has to be below the smaller one."
              (om?::apply-rec cs vars))
 
              ((equal recursive? "car-cdr") 
-              (om?::funcallv-rec-car-cdr cs vars))
+             (om?::funcallv-rec-car-cdr cs vars))
 
              (t (om?::less-deep-mapcar cs vars))
             ))
@@ -411,7 +357,7 @@ but the larger jump has to be below the smaller one."
 
 (om::defmethod* mc->pcv ((n t))
   :initvals '(6000) :indoc '("variable, number or list") 
- (/v (modv n 1200) 100))
+(/v (modv n 1200) 100))
 
 (om::defmethod* mc->pcv ((n-list list))
  (mapcar #'mc->pcv n-list))
@@ -590,68 +536,5 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
    (cond ((listp e) (reduce-chunks #'andv (mapcar #'(lambda (x) (memberv x sequence-flat)) (om::flat e))))
           (t (memberv e sequence-flat)))))
 
-#|		  
-(defun prolog-difference (y m z)
- (either
-  (progn 
-    (assert! (equalv y nil))
-    (assert! (equalv z nil)))
-  (let ((a (make-variable))
-        (y1 (make-variable))
-        (m1 (make-variable))
-        (z1 (make-variable)))
-    (assert! (equalv y (cons a y1)))
-    (assert! (equalv m m1))
-    (either 
-      (progn 
-        (assert! (memberv a m))
-        (assert! (equalv z z1))
-        (prolog-difference y1 m1 z1))
-      (progn
-        (assert! (equalv z (cons a z1)))
-        (prolog-difference y1 m1 z1))))))
-		
-(defun prolog-close-list (list)
-  (one-value
-   (assert! (equalv list nil))
-    (let ((a (make-variable))
-          (b (make-variable)))
-      (assert! (equalv list (cons a b)))
-      (prolog-close-list b))))
-			  		
-(defun prolog-remove-duplicates (list set)
-  (let ((set0 (make-variable)))
-    (prolog-remove-duplicates-internal list set0)
-    (assert! (equalv set set0))))
-	
-(defun prolog-remove-duplicates-internal (list set)
-  (print (list 'prolog-remove-duplicates-internal 'list list 'set set))
-  (either
-    (progn
-      (assert! (equalv list nil))
-      (prolog-close-list set))
-    (let ((a (make-variable))
-          (b (make-variable))
-          (c (a-booleanv)))
-      (assert! (equalv list (cons a b)))
-      (assert! (equalv c (one-value (memberv a set) nil)))
-      (either
-       (progn 
-         (assert! (equalv c t))
-         (prolog-remove-duplicates-internal b set))
-       (let ((set1 (make-variable)))     
-         (prolog-insert a set set)
-         (prolog-remove-duplicates-internal b set))))))
-		 
- (defun prolog-insert (elem list1 list2)
-   (either
-     (progn
-       (assert! (equalv list1 nil))
-       (assert! (equalv list2 (cons elem nil))))
-     (let ((h (make-variable))
-           (l (make-variable))
-           (r (make-variable)))
-       (assert! (equalv list1 (cons h l)))
-       (assert! (equalv list2 (cons h r)))
-       (prolog-insert elem l r))))
-|#
+(defun sumv (list)
+  (reduce-chunks #'+v list :default 0))

@@ -8,6 +8,10 @@
 (defmethod oa::set-not-resizable ((self non-deter-window) &optional
 width height) nil)
 
+;(defmethod update-di-size ((self om-text-edit-view) container)
+;  (om-set-view-position self #+win32(om-make-point 12 12) #-win32(om-make-point 12 10))
+;  (om-set-view-size self (om-subtract-points (om-view-size container) #+win32(om-make-point 28 24) #-win32(om-make-point 28 20))))
+
 #|
 (defmethod om-set-view-size ((self non-deter-window) size) 
    (declare (ignore size))
@@ -61,30 +65,31 @@ width height) nil)
                               editor))))))
            (t ;(setf dialog (om-make-window 'om-dialog  
 		;			   :window-title "Non Deterministic Listener" 
-		;			   :size (om-make-point 400 200) 
-                 ;                          :position :centered))  
+			;		   :size (om-make-point 400 200) 
+                          ;                 :position :centered))  
 	     (setf dialog (om-make-window 'non-deter-window 
-                                           :window-title "Non deterministic listener"
+                                           :window-title "Non Deterministic Listener"
                                            :position :centered 
                                            :window-show nil
-                                           :size (om-make-point 600 400)
+                                           :size (om-make-point 600 400) 
                                            ;:font (om-make-font "Arial" 12 :mode :srcor :style :plain)
                                            :bg-color (om-make-color 0.875 0.875 0.875)))
 	      ;(om-make-dialog-item 'om-text-edit-view
-                ;                   (om-make-point 25 35) (om-make-point 350 120)
-                  ;                 (format nil "~D" value)
-                    ;               :font *om-default-font2* 
-                      ;             :bg-color *om-white-color*  
-                        ;           :scrollbars :v 
-                          ;         :wrap-p t
-                            ;       :save-buffer-p t)))) 	      
+            ;                       (om-make-point 25 35) (om-make-point 550 350)
+              ;                     (format nil "~D" value)
+                ;                   :font *om-default-font2* 
+                  ;                 :bg-color *om-white-color*  
+                    ;               :scrollbars :v 
+                      ;             :wrap-p t
+                        ;           :save-buffer-p t)))) 	      
               (om-make-view 'om-text-edit-view
                             :save-buffer-p t
                             :scrollbars :v
                             :text (format nil "~D" value)
                             :wrap-p t
-                            :size (om-make-point 560 350);(- (om-point-h (om-interior-size dialog)) 40) (- (om-point-v (om-interior-size dialog)) 50))
-                            :position (om-make-point 25 35)))))
+                            :size (om-make-point 560 350)
+                            :position (om-make-point  25 35)))))
+
     (om-add-subviews dialog value-item-view  
                      (om-make-dialog-item 'om-static-text (om-make-point 25 10) (om-make-point 420 20) "DO YOU WANT ANOTHER SOLUTION?")
                                           ;:bg-color (om-make-color 0.624 0.624 0.624))
@@ -95,23 +100,27 @@ width height) nil)
                                           :di-action (om-dialog-item-act item
                                                        (om-return-from-modal-dialog dialog t))
                                           :default-button t))
-   (if (scoreeditor-p value) 
+  ;(print (om-view-container (panel (editor dialog))))
+  ;(print (staff-sys (panel (editor dialog))))
+
+  (if (scoreeditor-p value) 
       (cond
        ((equal (class-name (class-of value)) 'poly)
           (let* ((voices (voices value))
-                 (staves (mapcar #'correct-listener-staff voices)))
+                  (staves (mapcar #'correct-listener-staff voices)))
           (progn (change-select-system (panel (editor dialog)) voices staves)  
-                 (non-deter-modal-dialog dialog))))
+                        (non-deter-modal-dialog dialog)) ))
         ((equal (class-name (class-of value)) 'multi-seq)
           (let* ((chord-seqs (chord-seqs value))
-                 (staves (mapcar #'correct-listener-staff chord-seqs)))
+                  (staves (mapcar #'correct-listener-staff chord-seqs)))
           (progn (change-select-system (panel (editor dialog)) chord-seqs staves)  
-                 (non-deter-modal-dialog dialog))))
+                        (non-deter-modal-dialog dialog)) ))
        (t (progn (change-system (panel (editor dialog)) (correct-listener-staff value)) 
-                 (non-deter-modal-dialog dialog))))     
-    (non-deter-modal-dialog dialog)
-    )   
-    ))
+                     (non-deter-modal-dialog dialog))))
+
+   (non-deter-modal-dialog dialog)
+    )
+))
 
 ;;;(non-determinise-listener 0)
 
@@ -152,7 +161,7 @@ width height) nil)
            (midic-max (list-max (flat midics))))
      (cond 
       ((< midic-min 3600)
-       (cond ((< midic-max 5500) 'ff)
+       (cond ((< midic-max 6400) 'ff)
                  ((<= midic-max 8400) 'gff)
                  (t 'ggff)))
 
@@ -174,5 +183,3 @@ width height) nil)
            (progn (throw 'succeed value) (print value)))))))
 
 (in-package :om)
-
-

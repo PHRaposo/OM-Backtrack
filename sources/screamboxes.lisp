@@ -17,14 +17,14 @@
                                (om-abort)))))
      (cond
       ((equal (allow-lock self) "l") 
-       (setf (value self) (list (special-lambda-value self (intern (string (reference self)) :s)))) ;;;intern screamfun to :s package
+       (setf (value self) (list (special-lambda-value self (intern (string (reference self)) :s)))) ;;;test with :s package
        (car (value self)))
       ((or ;(equal (allow-lock self) "l") 
            (equal (allow-lock self) "o")  
            (and (equal (allow-lock self) "x") (value self)) 
            (and (equal (allow-lock self) "&") (ev-once-p self))) (call-next-method))
       (t (let* ((args  (loop for input in (inputs self)
-                             when (not (keyword-input-p input)) collect (omNG-box-value  input)))
+                             when (not (keyword-input-p input)) collect (omNG-box-value input)))
                 (qargs (loop for val in args collect (if (or (symbolp val) (omlistp val)) `',val val))) 
                 (themethod (compute-applicable-methods (fdefinition (reference self)) args)) rep)
            (if (null themethod)
@@ -44,26 +44,26 @@
              (setf (value self) rep))
            (when (equal (allow-lock self) "x")
              (setf (value self) rep))
-   		  (progn (setf (value self) rep) 
-               (nth numout rep)))))))
-
+          (progn (setf (value self) rep) ;;; new for om-backtrack in OM 7.2
+               (nth numout rep))))))
+             )
 
 (defmacro evalsc (fun arg)
   `(let ((varg (loop for item in ,arg collect (quote item))))
      (print (,fun varg))))
 
-
 (defmethod special-lambda-value ((self screamerboxes) symbol)
-   "Eval a screamerbox in lambda mode."
-   (multiple-value-bind (nesymbs args) (get-args-eval-currry self)
-     (eval `#'(lambda ,(reverse nesymbs)
-                (case *screamer-valuation*
-                  (0 (s::one-value (,symbol ,.args)))
-                  (1 (s::all-values (,symbol ,.args)))  
-                  (2 (s::print-values (,symbol ,.args))))))))
+"Eval a screamerbox in lambda mode."
+ (multiple-value-bind (nesymbs args) (get-args-eval-currry self)
+  (eval `#'(lambda ,(reverse nesymbs)
+             (case *screamer-valuation* 
+               (0 (s::one-value (,symbol ,.args)))
+               (1 (s::all-values (,symbol ,.args)))
+               (2 (s::print-values (,symbol ,.args))))))))
+
 
 (defmethod curry-lambda-code ((self screamerboxes) symbol)
-  "Lisp code generation for a screamerbox in lambda mode."
+  "Lisp code generation for a  screamerbox in lambda mode."
 
    (let ((nesymbs nil)
          (oldlambdacontext *lambda-context*))
@@ -89,12 +89,10 @@
 
        (setf *lambda-context* oldlambdacontext)
   )))
-
+	 			
 (defmethod gen-code-call ((self screamerboxes) &optional args)
-   (let ((screamerfun `,(intern (string (reference self)) :s)))
-     
+   (let ((screamerfun `,(intern (string (reference self)) :s)))     
      `(,screamerfun ,.(decode self))))
-
 
 (defmethod gen-code ((self screamerboxes) numout)
    "Generate Lisp code for the box 'self'."
@@ -106,15 +104,14 @@
        `(nth ,numout ,(gen-code (value self) 0)))
       ((equal (allow-lock self) "o") 
        `',(reference self))
-      ((equal (allow-lock self) "l") 
+      ((equal (allow-lock self) "l")
        (curry-lambda-code self screamerfun))
       (t  `(,screamerfun ,.(decode self))))))
 
-
 ;Faire la meme chose pour les autres fontions
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; TODO omNG-copy
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;; TODO - omNG-copy
 
 #|
 (defmethod omNG-copy ((self screamerboxes))
@@ -130,5 +127,3 @@
      rep
      ))
 |#
-
-

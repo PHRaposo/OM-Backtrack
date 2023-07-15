@@ -16,7 +16,6 @@
       (cons (a-member-of dom)
             (list-of-members-of (1- n) dom))))
 
-
 (defun list-of-integers-between (n low high)
   (if (zerop n) nil
       (cons (an-integer-between low high)
@@ -97,7 +96,7 @@ an integer between low and high. The value depends on the backtracking caused by
 
 (defmethod get-boxcallclass-fun ((self (eql 'a-member-of))) 'screamerboxes)
 (defmethod! a-member-of  ((lst list))
-   :initvals '((a b c d)) 
+   :initvals '((0 1 2 3 4 5)) 
    :indoc '("list of possible values")
    :doc "Defines a Screamer variable, in the list of values
 Without constraints, an-member-of enumerates all the values of the list.
@@ -142,7 +141,7 @@ Else, apply-cont causes backtrack.
 
 (defmethod!  apply-cont ((funs list) (var om::t))  
   :indoc '("List of constraints in lambda-mode" "Variables")
-  :initvals '(nil nil)
+  :initvals '(nil nil)  
   :icon 486
   (loop for fun in funs
         do
@@ -228,12 +227,11 @@ The value depends on the backtracking caused by the constraints"
   :icon 486 
   (s::list-of-chords-in l dom prov))
 
-
 (defun alldiff2 (l)
   (cond ((null l) t)
         ((member (car l) (cdr l) :test #'equal) nil)
         (t (alldiff2 (cdr l)))))
-
+ 
 (defmethod! alldiff? ((l list))
   :initvals '(nil)
   :indoc '("a list")
