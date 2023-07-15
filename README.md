@@ -1,11 +1,52 @@
-# OM-SCREAMER
+# OM-SCREAMER LIBRARY
 
-THIS IS AN ATTEMPT TO PORT THE OM-BACKTRACK LIBRARY (CONSTRAINT SOLVER PROJECT FROM OLDER VERSIONS OF OPENMUSIC) TO OM 7.2.
+Includes:
 
-THIS PROJECT ALSO AIMS TO EXPAND SCREAMER POSSIBILITIES WITH SCREAMER-PLUS (SEE https://github.com/danlentz/screamer-plus/blob/master/screamer-plus.lisp).
+* OM-BACKTRACK based on original version for OM 4
+   by Gerard Assayag and Augusto Agon
+   Copyright (C) 1997-2003 by IRCAM-Centre Georges Pompidou, Paris, France.
+	   
+Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
 
-THE SCREAMER PACKAGE ITSELF WAS NOT INCLUDED HERE SINCE IT'S ALREADY AVAILABLE IN OM (FROM MATHTOOLS).
+* SCREAMER-CONSTRAINT-SOLVER by Paulo Raposo
 
-ORIGINAL TUTORIAL PAGE (BY CHARLOTTE TRUCHET): http://recherche.ircam.fr/equipes/repmus/OpenMusic/user-doc/DocFiles/backtrackTutorial/ .
+* PC-SET-THEORY from PW-CONSTRAINTS and OMCS 
+  by Mikael Laurson (1995) - Ported to OpenMusic by Orjan Sandred (1999)
+  Adapted to OM-Screamer by Paulo Raposo  
+	   
+  LISP LIBRARIES:
+ 
+* SCREAMER 4.0.0
+  Based on original version 3.20 by Jeffrey Mark Siskind and David Allen McAllester
+  Copyright 1991 Massachusetts Institute of Technology. All rights reserved.
+  Copyright 1992, 1993 University of Pennsylvania. All rights reserved.
+  Copyright 1993 University of Toronto. All rights reserved.
+    
+  Maintaner: Nikodemus Siivola <https://github.com/nikodemus/screamer>
+  
+* SCREAMER-PLUS 0.1 by Simon White
+  Copyright 1998-2000 University of Aberdeen 
+  
+* CLOSER-MOP by Pascal Costanza 
+  Copyright (c) 2005 - 2016 Pascal Costanza
+	  
+* ITERATE by Jonathan Amsterdam
+  Adapted to ANSI Common Lisp in 2003 by Andreas Fuchs
+  Copyright 1989, Jonathan Amsterdam.
+
+* Code excerpts from t2l-screamer by Killian Sprotte
+
+* Retract (extension to Screamer) by Buddy Kresge 
+
+
+ORIGINAL OM-BACKTRACK TUTORIAL PAGE (BY CHARLOTTE TRUCHET): http://recherche.ircam.fr/equipes/repmus/OpenMusic/user-doc/DocFiles/backtrackTutorial/ .
+
+OM-BACKTRACK SCREENSHOT:
 
 ![alt text](https://github.com/PHRaposo/OM-Screamer/blob/main/screenshot.png?raw=true)
+
+SCREAMER-SOLVER SCREENSHOT:
+
+![alt text](https://github.com/PHRaposo/OM-Screamer/blob/main/screenshot2.png?raw=true)
+
+
