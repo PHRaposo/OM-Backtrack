@@ -140,7 +140,7 @@
       (setq temp prime)
       (om::while temp
         (setq int (- (first temp) ref))
-        (om::when (> int 6) (setq int (- 12 int)))
+        (when (> int 6) (setq int (- 12 int)))
         (setf (nth (1- int) res) (1+ (nth (1- int) res)))
         (pop temp)))
     res))
