@@ -1,7 +1,7 @@
 (IN-PACKAGE :CL-USER)
 (SCREAMER:DEFINE-SCREAMER-PACKAGE :om-screamer
  (:nicknames :om?)
- (:use :screamer+ :om)
+ (:use :screamer+)
  )
 (IN-PACKAGE :om-screamer)
 
