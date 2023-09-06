@@ -8,7 +8,7 @@ Includes:
 	   
 Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
 
-* SCREAMER-CONSTRAINT-SOLVER by Paulo Raposo
+* SCREAMER-CONSTRAINT-SOLVER and SCREAMER-SCORE by Paulo Raposo
 
 * PC-SET-THEORY from PW-CONSTRAINTS and OMCS 
   by Mikael Laurson (1995) - Ported to OpenMusic by Orjan Sandred (1999)
@@ -48,5 +48,9 @@ OM-BACKTRACK SCREENSHOT:
 SCREAMER-SOLVER SCREENSHOT:
 
 ![alt text](https://github.com/PHRaposo/OM-Screamer/blob/main/screenshot2.png?raw=true)
+
+SCREAMER-SCORE SCREENSHOT:
+
+![alt text](https://github.com/PHRaposo/OM-Screamer/blob/main/screenshot3.png?raw=true)
 
 
