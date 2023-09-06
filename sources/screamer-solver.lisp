@@ -272,9 +272,9 @@
 	                             `(apply ',(second compiled-forms) (list ,vars-name ,p-vars-name)))
 		              (t `(apply ',compiled-forms (list ,vars-name ,p-vars-name))))))
 	       ))))
-	(scode ;==> SOLVER CODE
+	(scode ;==> SOLVER CODE 
 	 (if count-fail? ;===> COUNT FAILURES ON
-	 `(s::count-scs-failures
+	 `(s::count-scs-failures 
 	   (let* ((,vars-name ,(reclist-vars vars))
 
 	            (,p-vars-name ,(if (functionp compiled-p-vars) 
@@ -295,13 +295,13 @@
 
 	         ,p-constraints
 
-	         ,solution-code)))
+	          ,solution-code)))
 		)
 
  (case val 
   (2 (setf *screamer-valuation* 2)))
 
-  (let ((scs-function (compile (eval `(screamer::defun ,(intern (string (gensym)) :s) () ,scode)))) ;==> COMPILED SOLVER FUNCTION
+  (let ((scs-function (compile (eval `(defun ,(intern (string (gensym)) :s) () ,scode)))) ;==> COMPILED SOLVER FUNCTION
         (scs-time (list (get-internal-run-time) (get-internal-real-time))))
 
  (print "Timing evaluation of screamer-solver...")
@@ -325,9 +325,9 @@
 (defun reclist-vars (vars)
  (labels ((reclist (x)
            (cond ((atom x) x)  
-                 ((and (listp x) (every #'atom x))
-		         `(list ,.x))
-		         (t `(list ,.(mapcar #'reclist x))))))
+                     ((and (listp x) (every #'atom x))
+		       `(list ,.x))
+		     (t `(list ,.(mapcar #'reclist x))))))
   (reclist vars)))
 		   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -335,7 +335,7 @@
 ; => ADAPTED FROM OMCS AND CLUSTER-ENGINE
 
 (defun make-anon-screamerfun (fn) ;;; OMCS 
-  (eval `(screamer::defun ,(gensym) ,.(rest fn))))
+  (eval `(defun ,(gensym) ,.(rest fn))))
 
 (defun compile-screamer-constraint (fun) ;;;CE
  (let* ((expr (function-lambda-expression fun)))
@@ -567,66 +567,3 @@
   :icon 487
  (om?::list-of-chords-inv n-chords domain random?))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; ===> IN-PROGRESS <===
-;;; SCREAMER-SCORE - ONLY PITCH - ONE-VOICE
-
-(defun update-pitches (voice-object solution)
-(make-instance 'voice
-    :tree (tree voice-object)
-    :tempo (tempo voice-object)
-    :legato (legato voice-object)
-    :ties (ties voice-object)
-    :chords solution))
-
-(defmethod! screamer-score ((voice-object voice) 
-                                                (domain list)
-                                                (constraints t)
-                                                (force-function t)) 
-
-  :initvals '(nil (6000 6200 6400) nil "static-ordering linear-force") 
-
-  :indoc '("voice" "list"  "constraint<lambda-patch> or list" "ordering-force-functions")
-
-  :doc "Screamer Score Constraint Solver" 
-
-  :icon 487 
-
-(let* ((pref-valuation *screamer-valuation*)
-         (n-notes (length (remove-if #'(lambda (x) (< x 0)) (tree2ratio (tree voice-object)))))
-         ;attacks - harmonic-slice - etc..
-         (pitch-domain (om?::list-of-random-members-ofv n-notes (reverse domain)))) ;RANDOM? OR om?::list-of-members-ofv
-
-   (if (listp constraints) 
-       (mapcar #'(lambda (cs) (apply cs (list pitch-domain))) constraints)
-       (apply constraints (list pitch-domain)))
-
-(setf *screamer-valuation* 2)
-
-(let ((solution
-        (s::print-values
-         (update-pitches voice-object
-         (s::solution pitch-domain
-                    (cond ((equal force-function "static-ordering linear-force") (s::static-ordering #'s::linear-force))
-                              ((equal force-function "static-ordering divide-and-conquer-force") (s::static-ordering #'s::divide-and-conquer-force))
-                              (t (s::reorder 
-                                  (cond ((null (second force-function)) #'s::domain-size)
-                                            ((string= (format nil "~A" (second force-function)) "domain-size") #'s::domain-size)   
-                                            ((string= (format nil "~A" (second force-function)) "range-size") #'s::range-size)
-                                           (t #'s::domain-size))
-                                  (cond ((null (third force-function)) #'(lambda (x) (declare (ignore x)) nil))
-                                            ((functionp (third force-function)) (third force-function))
-                                            ((string= (format nil "~A" (third force-function)) "(< x 1e-6)") #'(lambda (x) (< x 1e-6)))
-                                            (t #'(lambda (x) (declare (ignore x)) nil)))
-                                  (if (equal (fourth force-function) ">") #'> #'<) 
-                                (cond ((null (fifth force-function)) #'s::linear-force) 
-                                      ((string= (format nil "~A" (fifth force-function)) "linear-force") #'s::linear-force)   
-                                      ((string= (format nil "~A" (fifth force-function)) "divide-and-conquer-force") #'s::divide-and-conquer-force)
-                                      (t #'s::linear-force))
-                               )))
-            )))))
-
-     (progn (setf *screamer-valuation* pref-valuation) 
-                 solution)
-      
-  )))

@@ -1,5 +1,109 @@
 (IN-PACKAGE :om-screamer)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; FROM T2L-SCREAMER
+
+"Copyright (c) 2007, Kilian Sprotte. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+
+  * Redistributions in binary form must reproduce the above
+    copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials
+    provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR 'AS IS' AND ANY EXPRESSED
+OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
+
+(defmacro n-values (n
+		    &body forms)
+(let ((values (gensym "VALUES-"))
+      (last-value-cons  (gensym "LAST-VALUE-CONS-"))
+      (value (gensym "VALUE-")))
+  `(let ((,values '())
+         (,last-value-cons nil)
+   (number 0))
+     (block n-values
+ (for-effects
+   (let ((,value (progn ,@forms)))
+     (global (cond ((null ,values)
+		    (setf ,last-value-cons (list ,value))
+		    (setf ,values ,last-value-cons))
+		   (t (setf (rest ,last-value-cons) (list ,value))
+		      (setf ,last-value-cons (rest ,last-value-cons))))
+	     (incf number))
+     (when (>= number ,n) (return-from n-values)))))
+     ,values)))
+
+(defun funcallv-rec (fn tree)
+ (cond ((equalv nil tree) nil)
+       ((funcallv #'consp tree) 
+        (cons (funcallv-rec fn (funcallv #'car tree))
+              (funcallv-rec fn (funcallv #'cdr tree))))
+    (t (funcallv fn tree))))
+
+(defun modv-alt (n d) 
+ (let ((x (an-integerv)))     
+   (assert! (>=v x (minv 0 (+v d 1))))
+   (assert! (<=v x (maxv 0 (-v d 1))))
+   (assert! (=v x (-v n (*v d (an-integerv)))))
+   x))
+
+(defun %v (n d) (modv n d))
+
+(defun powv (a b) (funcallv #'pow a b))
+
+(cl:defun nsucc (input n &key step list-padding pad-character)
+  (cond
+   ((null step) (nsucc input n :step (1- n) :list-padding list-padding :pad-character pad-character))
+   (t
+    (let* ((list (if list-padding 
+                     (append input
+                             (make-sequence 'list (* -1 (- (length input) 
+                                                           (* n (ceiling (/ (length input) n))))) :initial-element pad-character))
+                   input))
+           (length (length list)))
+      (loop for i from 0
+            for j = (* i step)
+            for k = (+ j n)
+            while (< j (- (length list) step))
+            collect (subseq list j (if (<= k length) k length)))))))
+			
+(cl:defun reduce-chunks (fn input &key default)
+  (cond
+   ((null input) default)
+   ((not (listp input)) (reduce-chunks fn (list input) :default default))
+   ((>= (length input) call-arguments-limit) 
+    (reduce fn (mapcar #'(lambda (chunk) (apply fn chunk)) 
+                       (nsucc input call-arguments-limit :step call-arguments-limit))))
+   (t (apply fn input))))
+
+(defun sumv (list)
+  (reduce-chunks #'+v list :default 0))
+
+#|
+(defun all-membersv (e sequence)
+  (let ((sequence-flat (om::flat sequence)))
+   (cond ((listp e) (reduce-chunks #'andv (mapcar #'(lambda (x) (memberv x sequence-flat)) (om::flat e))))
+          (t (memberv e sequence-flat)))))
+|#
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; OM-SCREAMER   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; VARIABLES GENERATORS
 
@@ -128,6 +232,11 @@
 ; N = (* D X + REM-X)
 ; REM-X = N - (* D X)
 
+(defun member-of-pcv? (var pc-list)
+ (let ((pcv (om::mc->pcv var)))
+  (assert! (memberv pcv pc-list))
+ (memberv var (all-values (solution pcv (static-ordering #'linear-force))))))
+    
 (defun a-mc->pcv (n)
  (let ((x (an-integerv)))
   (assert! (=v x (/v (an-integer-modv n 1200) 100)))
@@ -141,6 +250,7 @@
   (funcallv #'last list n))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; NEW FUNCTIONS 
 
 (defun assert!-all-differentv (list)
    (labels ((all-different (x xs)
@@ -151,24 +261,7 @@
      (all-different (car list) (cdr list))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; SCREAMER X->DX / DX->X /ALL-ROTATIONS / SMAT-TRANS / MODV
-
-(defun x->dxv (list)
- (mapcar #'(lambda (x y) (-v y x)) list (cdr list)))
-
-(defun dx->xv (start list)
- (dx->xv-internal start list nil))
-
-(defun dx->xv-internal (start list accumul)
-     (let ((sum (if accumul 
-                     (+v (first list) (first accumul))
-                     (+v start (first list)))))
-(if (cdr list)
-    (dx->xv-internal start (cdr list) (om::x-append sum accumul))
-    (om::x-append start (reverse accumul) sum))))
-
-(defun x->dx-absv (list)
- (mapcar #'(lambda (x y) (absv (-v y x))) list (cdr list)))
+;;; SCREAMER ALL-ROTATIONS / SMAT-TRANS / MODV
 
 (defun all-rotations-internal (list accumul)
  (let ((rotation (if accumul (om::x-append (cdr (first accumul)) (first (first accumul)))
@@ -188,9 +281,6 @@
 (defun nth-of-lists (n lists)
  (mapcar #'(lambda (lst) (nth n lst)) lists))
 
-(defun modv (n d) 
- (funcallv #'mod n d))
-
 (defun spermut-random (list)
  (all-values (a-random-member-of list)))
 
@@ -201,10 +291,25 @@
 (let ((var-list (list-of-members-ofv (length list) (reverse list))))
 (assert!-all-differentv var-list)
  (all-values (solution var-list (static-ordering #'linear-force)))))
+ 
+(defun asc-permutations (list n)
+ (let ((var-list (list-of-members-ofv n (reverse list))))
+ (assert!-all-differentv var-list)
+ (assert! (apply #'<v var-list))
+  (all-values (solution var-list (static-ordering #'linear-force)))))
 
 (defun scombinations (list)
 (let ((var-list (list-of-members-ofv (length list) (reverse list))))
  (all-values (solution var-list (static-ordering #'linear-force)))))
+
+(defun closest-midic (note midics-domain)
+(let* ((mcv (a-member-ofv midics-domain)))
+  (let ((intervals (all-values 
+                          (solution (om?::absv (-v note mcv)) 
+                          (static-ordering #'linear-force)))))
+(assert! (orv (=v mcv (+v note (om::list-min intervals)))
+                    (=v mcv (-v note (om::list-min intervals)))))
+(one-value (solution mcv (static-ordering #'linear-force))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SCREAMER-CONSTRAINTS
@@ -225,27 +330,6 @@
                      (app-rec (cdr x))))))
   (app-rec list)
  )))
- 
-(defun apply-rec-internal (fn list accumul)
-  (let* ((fn-inputs (length (om::function-lambda-list fn)))
-         (list-inputs (all-values (an-integer-between 0 (1- fn-inputs)))))  
-  (if (null (nth (1- fn-inputs) list))
-       accumul
-       (let ((one-result (apply fn (mapcar #'(lambda (n) 
- 			  	                 (nth n list)) list-inputs)))) 
-		(apply-rec-internal fn (cdr list) (om::x-append accumul one-result))        
-
-  ))))
-  
-(defun apply-rec (fn list) (apply-rec-internal fn list nil))
-
-(defun funcallv-rec-car-cdr (fn list)
-    (labels ((funcall-car-cdr (x xs)
-                 (ifv (null xs)
-                  t
-                  (andv (funcallv fn x xs)
-                            (funcall-car-cdr (carv xs) (cdrv xs))))))
-     (funcall-car-cdr (carv list) (cdrv list))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONSTRAINTS FOR PITCHES - ONE MELODIC LINE (ASSERT! IS NOT NEEDED)
@@ -305,236 +389,7 @@ but the larger jump has to be below the smaller one."
 ;;; CONSTRAINTS FOR CHORDS (LIST OF VARIABLES)
 
 (defun symm? (var-list)
- (let ((int-mod12v (mod12v (x->dxv var-list))))
+ (let ((int-mod12v (om::mod12v (x->dxv var-list))))
 (assert! (equalv int-mod12v (reverse int-mod12v)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; OM METHODS 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-; APPLY-CONTV
-
-(om::defmethod! apply-contv ((cs function) (mode string) (recursive? string) (vars t))  
-  :initvals '(nil "atom" "off" nil) 
-  :indoc '("patch in lambda mode" "string" "string" "list of variables" ) 
-  :menuins '((1 (("atom" "atom") ("list" "list")))
-                   (2 (("off" "off") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr")))
-                  )
-  :doc "Applies constraint recursively to list of variables."
-  :icon 487
-
-  (cond ((equal mode "atom") 
-          (om?::deep-mapcar cs cs vars))
-                           
-            ((equal mode "list") 
-             (cond 
-
-             ((equal recursive? "n-inputs")
-             (om?::apply-rec cs vars))
-
-             ((equal recursive? "car-cdr") 
-             (om?::funcallv-rec-car-cdr cs vars))
-
-             (t (om?::less-deep-mapcar cs vars))
-            ))
-
-           (t (progn (om-message-dialog "ERROR!") (om-abort)))))
-
-; -----------------------------------------
-; OM+V / OM-V / OM*V / OM/V / MOD12V / MC->PCV / OM-ABSV
-
-(om::defmethod* om-absv ((n t))
- (absv n))
-
-(om::defmethod* om-absv ((lst list))
- (mapcar #'absv lst))
-
-(om::defmethod* mod12v ((n t))
- (funcallv #'mod n 12))
-
-(om::defmethod* mod12v ((lst list))
- (mapcar #'mod12v lst))
-
-(om::defmethod* mc->pcv ((n t))
-  :initvals '(6000) :indoc '("variable, number or list") 
-(/v (modv n 1200) 100))
-
-(om::defmethod* mc->pcv ((n-list list))
- (mapcar #'mc->pcv n-list))
- 
-; -----------------------------------------
-
-(om::defmethod* om*v ((arg1 t) (arg2 t))  
-  :initvals '(0 0) :indoc '("variable, number or list" "variable, number or list") 
-  :doc ""
-  (*v arg1 arg2))
-
-(om::defmethod* om*v ((arg1 t) (arg2 list))
-  (mapcar #'(lambda (input)
-              (om*v arg1 input)) arg2))
-
-(om::defmethod* om*v ((arg1 list) (arg2 t)) 
-  (mapcar #'(lambda (input)
-              (om*v  input arg2)) arg1))
-
-; -----------------------------------------
-		  
-(om::defmethod* om+v ((arg1 t) (arg2 t))  
-:initvals '(0 0) :indoc '("variable, number or list" "variable, number or list") 
-:doc ""
-(+v arg1 arg2))
-
-(om::defmethod* om+v ((arg1 t) (arg2 list))
-(mapcar #'(lambda (input)
-            (om+v arg1 input)) arg2))
-
-(om::defmethod* om+v ((arg1 list) (arg2 t)) 
-(mapcar #'(lambda (input)
-            (om+v  input arg2)) arg1))
-
-; -----------------------------------------
-
-(om::defmethod* om-v ((arg1 t) (arg2 t))  
-:initvals '(0 0) :indoc '("variable, number or list" "variable, number or list") 
-:doc ""
-(-v arg1 arg2))
-
-(om::defmethod* om-v ((arg1 t) (arg2 list))
-(mapcar #'(lambda (input)
-            (om-v arg1 input)) arg2))
-
-(om::defmethod* om-v ((arg1 list) (arg2 t)) 
-(mapcar #'(lambda (input)
-            (om-v  input arg2)) arg1))
-	
-; -----------------------------------------
-
-(om::defmethod* om/v ((arg1 t) (arg2 t))  
-:initvals '(1 1) :indoc '("variable, number or list" "variable, number or list") 
-:doc ""
-(/v arg1 arg2))
-
-(om::defmethod* om/v ((arg1 t) (arg2 list))
-(mapcar #'(lambda (input)
-            (om/v arg1 input)) arg2))
-
-(om::defmethod* om/v ((arg1 list) (arg2 t)) 
-(mapcar #'(lambda (input)
-            (om/v  input arg2)) arg1))
-
-; -----------------------------------------
-
-;;;DEEP-MAPCAR - FROM OM AND ESQUISSE
-
-(defun deep-mapcar (fun fun1 list? &rest args)
-  "Mapcars <fun> or applies <fun1> to <list?> <args> whether <list?> is a list or not."
-  (cond
-    ((null list?) ())
-    ((not (consp list?)) (apply fun1 list? args))
-    (t (cons (apply #'deep-mapcar fun fun1 (car list?) args)
-	     (apply #'deep-mapcar fun fun1 (cdr list?) args)))))
-		 
-(defun car-mapcar (fun list?  &rest args)
-   "Mapcars <fun> if list? is a list or applies <fun> if it is an atom or
- a one-element list"
-   (cond  ((atom list?) (apply fun list? args))
-          ((= (length list?) 1) (apply fun (car list?) args))
-          (t (mapcar #'(lambda (x) (apply fun x  args ))  list? ))))
-
-(defun less-deep-mapcar (fun  list? &rest args)
-   "Applies <fun> to <list?> <args> if <list?> is a one-level list .
-    Mapcars <fun> to <list?> <args> if <list?> is a multi-level list. "
-   (cond
-     ((null list?) ())
-     ((atom (car list?)) (apply fun list? args))
-     ((atom (car (car list?))) 
-      (cons (apply fun (car list?)  args ) (apply #'less-deep-mapcar fun (cdr list?) args)))
-     (t (cons (apply #'less-deep-mapcar fun  (car list?) args)
-              (apply #'less-deep-mapcar fun  (cdr list?) args)))))
-	 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; FROM T2L LIBRARY 
-
-"Copyright (c) 2007, Kilian Sprotte. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without
-modification, are permitted provided that the following conditions
-are met:
-
-  * Redistributions of source code must retain the above copyright
-    notice, this list of conditions and the following disclaimer.
-
-  * Redistributions in binary form must reproduce the above
-    copyright notice, this list of conditions and the following
-    disclaimer in the documentation and/or other materials
-    provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY THE AUTHOR 'AS IS' AND ANY EXPRESSED
-OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
-WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
-GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
-
-(defmacro n-values (n
-		    &body forms)
-(let ((values (gensym "VALUES-"))
-      (last-value-cons  (gensym "LAST-VALUE-CONS-"))
-      (value (gensym "VALUE-")))
-  `(let ((,values '())
-         (,last-value-cons nil)
-   (number 0))
-     (block n-values
- (for-effects
-   (let ((,value (progn ,@forms)))
-     (global (cond ((null ,values)
-		    (setf ,last-value-cons (list ,value))
-		    (setf ,values ,last-value-cons))
-		   (t (setf (rest ,last-value-cons) (list ,value))
-		      (setf ,last-value-cons (rest ,last-value-cons))))
-	     (incf number))
-     (when (>= number ,n) (return-from n-values)))))
-     ,values)))
-
-(defun funcallv-rec (fn tree)
- (cond ((equalv nil tree) nil)
-       ((funcallv #'consp tree) 
-        (cons (funcallv-rec fn (funcallv #'car tree))
-              (funcallv-rec fn (funcallv #'cdr tree))))
-    (t (funcallv fn tree))))
-						
-(defun absv (k)
-   (maxv k (*v k -1)))
-
-(defun modv-alt (n d) 
- (let ((x (an-integerv)))     
-   (assert! (>=v x (minv 0 (+v d 1))))
-   (assert! (<=v x (maxv 0 (-v d 1))))
-   (assert! (=v x (-v n (*v d (an-integerv)))))
-   x))
-
-(defun %v (n d) (modv n d))
-
-(defun powv (a b) (funcallv #'pow a b))
-
-(cl:defun reduce-chunks (fn input &key default)
-  (cond
-   ((null input) default)
-   ((not (listp input)) (reduce-chunks fn (list input) :default default))
-   ((>= (length input) call-arguments-limit) 
-    (reduce fn (mapcar #'(lambda (chunk) (apply fn chunk)) 
-                       (nsucc input call-arguments-limit :step call-arguments-limit))))
-   (t (apply fn input))))
-
-(defun all-membersv (e sequence)
-  (let ((sequence-flat (om::flat sequence)))
-   (cond ((listp e) (reduce-chunks #'andv (mapcar #'(lambda (x) (memberv x sequence-flat)) (om::flat e))))
-          (t (memberv e sequence-flat)))))
-
-(defun sumv (list)
-  (reduce-chunks #'+v list :default 0))
+  

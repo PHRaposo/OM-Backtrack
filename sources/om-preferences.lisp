@@ -25,7 +25,7 @@
 	   
 Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
 
-* SCREAMER-CONSTRAINT-SOLVER by Paulo Raposo
+* SCREAMER-CONSTRAINT-SOLVER and SCREAMER-SCORE by Paulo Raposo
 
 * PC-SET-THEORY from PW-CONSTRAINTS
   by Mikael Laurson (1995) - Ported to OpenMusic by Orjan Sandred (1999) 
