@@ -6,7 +6,7 @@
 ;;;   Copyright (C) 1997-2003 by IRCAM-Centre Georges Pompidou, Paris, France.
 ;;;   Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
 ;;; 
-;;; * SCREAMER-CONSTRAINT-SOLVER by Paulo Raposo
+;;; * SCREAMER-CONSTRAINT-SOLVER and SCREAMER-SCORE by Paulo Raposo
 ;;;
 ;;; * PC-SET-THEORY from PW-CONSTRAINTS and OMCS 
 ;;;   by Mikael Laurson (1995) - Ported to OpenMusic by Orjan Sandred (1999) 
@@ -61,16 +61,19 @@
                          (om::om-relative-path '("sources" "closer-mop") "closer-mop-shared")
                          (om::om-relative-path '("sources" "closer-mop") "closer-lispworks")
                          (om::om-relative-path '("sources" "screamer-plus") "screamer-plus")					 					  
-			 (om::om-relative-path '("sources") "screamboxes")
+			             (om::om-relative-path '("sources") "screamboxes")
                          (om::om-relative-path '("sources") "screamfuns")
                          (om::om-relative-path '("sources") "screaminterface")						 
-			 (om::om-relative-path '("sources") "non-deter-patch")
-			 (om::om-relative-path '("sources") "package")
-			 (om::om-relative-path '("sources") "om-screamerfuns")						 	 
-			 (om::om-relative-path '("sources") "screamer-solver")
+			             (om::om-relative-path '("sources") "non-deter-patch")
+			             (om::om-relative-path '("sources") "package")
+			             (om::om-relative-path '("sources") "om-methods")						 
+			             (om::om-relative-path '("sources") "om-screamerfuns")						 	 
+			             (om::om-relative-path '("sources") "screamer-solver")
+			             (om::om-relative-path '("sources") "screamer-score") 
                          (om::om-relative-path '("sources" "pc-set-theory") "SCs-data")
                          (om::om-relative-path '("sources" "pc-set-theory") "all-SCs")						 						 
-                         (om::om-relative-path '("sources" "pc-set-theory") "pc-set-theory")						 						  
+                         (om::om-relative-path '("sources" "pc-set-theory") "pc-set-theory")
+			             (om::om-relative-path '("sources") "constraint-utils")						 						 						  
                          ))
 						 
 ;--------------------------------------------------
@@ -87,20 +90,21 @@
 	                                   list-of-chords-in alldiff? growing?) Nil)
  		       ("SCS"
  		          (("solver" nil nil (screamer-solver force-function screamer-doc) nil)
-				   ("om-methods" nil nil (om?::om+v om?::om-v om?::om*v om?::om/v om?::mc->pcv om?::mod12v om?::om-absv) nil)
+				   ("om-methods" nil nil (om+v om-v om*v om/v mc->pcv mod12v om-absv x->dxv x->dx-absv dx->xv all-membersv not-intersectionv all-diffv) nil)
 				   ("variables" nil nil (screamer-variable list-ofvs list-of-lists-ofv list-of-chords-inv) nil)
-				   ("functions" nil nil (om?::apply-contv om?::assert!-apply-rec om?::apply-rec om?::funcallv-rec om?::funcallv-rec-car-cdr) nil)
+				   ("functions" nil nil (apply-contv om?::assert!-apply-rec om?::apply-rec om?::funcallv-rec om?::funcallv-rec-car-cdr) nil)
 				   ("pc-set-theory" 
 					(("constraints" nil nil (om?::pc-setpv? om?::sub-setpv? om?::member-of-scv?) nil)
 					 ("SCs" nil nil (om?::SC-name om?::SC+off om?::SCs-card om?::SC-info om?::sub/supersets om?::SC-subsets) nil))
 					  nil nil nil)   				 
   				   ("constraints" 					   
-					    (("melody" nil nil (om?::all-ascendingv om?::all-descendingv om?::alowed-melodic-intervals om?::nor-allowed-melodic-intervals
-							               om?::no-repeated-melodic-intervals om?::ballistic?) nil)
-					    ("general" nil nil (om?::assert!-all-differentv om?::all-membersv) nil)) nil nil nil)					 
-				   ("utils" nil nil (om?::x->dxv om?::dx->xv om?::smat-trans om?::all-rotations om?::mc->pcv om?::modv) nil)
+					    (("general" nil nil (om?::assert!-all-differentv) nil)) nil nil nil)					 
+				   ("utils" nil nil (om?::smat-trans om?::all-rotations om?::modv) nil)
  					 ) Nil Nil Nil)
-									   
+	   		       ("Screamer-Score"
+	   		        (("main-functions" nil nil (screamer-score screamer-score-domain constraint-one-voice constraint-harmony constraint-profile constraint-measure) nil)
+	  				 ("utils" nil nil (contain-variables? pcset-equalv) nil)
+	   			     ) Nil Nil Nil)									   
 		       ("Screamer"
 		           (("primitives" nil nil (s::an-integer-between s::a-member-of s::fail) nil)
 				    ("variables" nil nil (s::a-member-ofv s::an-integerv s::an-integer-abovev s::an-integer-belowv s::an-integer-betweenv
@@ -150,7 +154,7 @@ Includes:
 	   
 Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
 
-* SCREAMER-CONSTRAINT-SOLVER by Paulo Raposo
+* SCREAMER-CONSTRAINT-SOLVER and SCREAMER-SCORE by Paulo Raposo
 
 * PC-SET-THEORY from PW-CONSTRAINTS and OMCS 
   by Mikael Laurson (1995) - Ported to OpenMusic by Orjan Sandred (1999) 
