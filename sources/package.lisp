@@ -1,7 +1,7 @@
 (IN-PACKAGE :CL-USER)
 (SCREAMER:DEFINE-SCREAMER-PACKAGE :om-screamer
  (:nicknames :om?)
- (:use :screamer+)
+ (:use :cl :screamer+)
  )
 (IN-PACKAGE :om-screamer)
 
@@ -10,7 +10,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; CONSTRAINT AND DOMAIN CLASSES FOR SCREAMER-SCORE
 
-(om::defclass* score-constraint ()
+(om::defclass score-constraint (simple-container)
  ((constraint-parameters :initform nil :initarg nil :reader get-constraint-parameters :writer set-constraint-parameters :documentation "list of screamer score constraint parameters"))
  (:documentation "A simple container for screamer-score constraint."))
  
@@ -20,7 +20,7 @@
 (om::defmethod* constraint-parameters ((self score-constraint))
  (get-constraint-parameters self))
 
-(om::defclass* score-domain ()
+(om::defclass score-domain (simple-container)
  ((domain-parameters :initform nil :initarg nil :reader get-domain-parameters :writer set-domain-parameters :documentation "list of screamer score domain parameters"))
  (:documentation "A simple container for screamer-score domain."))
  

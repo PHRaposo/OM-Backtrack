@@ -357,11 +357,15 @@
     solution)
   ((listp out)
     (let ((variables 
-           (cond ((equal (first out) :all) (first solution))
+           (cond ((null (first out)) nil)
+                     ((atom (first solution)) (first solution))
+                      ((equal (first out) :all) (first solution))
                       ((listp (first out)) (posn-match (first solution) (first out)))
                       (t nil)))
            (p-variables 
-           (cond ((equal (second out) :all) (second solution))
+           (cond ((null (second out)) nil)
+                     ((atom (second solution)) (second solution))
+                      ((equal (second out) :all) (second solution))
                       ((listp (second out)) (posn-match (second solution) (second out)))
                       (t nil))))
      (if variables 
@@ -451,7 +455,7 @@
                         ("domain-size" "domain-size")
                         ("range-size" "range-size" )))
                    )
-  :icon 487 
+  :icon 487
 (om-show-reference-doc 
  (cond  
   ((equal function "solution") 's::solution)

@@ -32,7 +32,7 @@ Second output: Returns all screamer variables if the first output is true and ni
 (all-membersv (mc->pcv domain-list) pcset))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;COUNTERPOINT ==> IN PROGRESS
+;;; HARMONIC AND MELODIC INTERVALS
 
 (defmethod! harmonic-intervalsv ((domain-list list) (mode string))		  
     :initvals '(nil "+/-")
@@ -43,8 +43,8 @@ Use > and < to add/remove outputs."
     :icon 487
 	:numouts 2
  (let ((intsv (if (equal mode "+/-") 
-	(mapcar #'(lambda (x y) (?::ifv (s::orv (null x) (null y)) nil (s::-v y x))) domain-list (cdr domain-list)) 
-	(mapcar #'(lambda (x y) (?::ifv (s::orv (null x) (null y)) nil (om?::absv (s::-v y x)))) domain-list (cdr domain-list))))) 
+	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (s::-v y x))) domain-list (cdr domain-list)) 
+	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (om?::absv (s::-v y x)))) domain-list (cdr domain-list))))) 
   (values-list (first-n intsv (length intsv)))))
 
 (defmethod get-boxcallclass-fun ((self (eql 'harmonic-intervalsv))) 'OMBoxSplit)
@@ -58,119 +58,142 @@ Use > and < to add/remove outputs."
     :icon 487
 	:numouts 2
  (let ((intsv (if (equal mode "+/-") 
-	(mapcar #'(lambda (x y) (?::ifv (s::orv (null x) (null y)) nil (s::-v y x))) domain-list1 domain-list2) 
-	(mapcar #'(lambda (x y) (?::ifv (s::orv (null x) (null y)) nil (om?::absv (s::-v y x)))) domain-list1 domain-list2)))) 
+	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (s::-v y x))) domain-list1 domain-list2) 
+	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (om?::absv (s::-v y x)))) domain-list1 domain-list2)))) 
   (values-list (first-n intsv (length intsv)))))
 
 (defmethod get-boxcallclass-fun ((self (eql 'melodic-intervalsv))) 'OMBoxSplit)
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;==> IN PROGRESS
 
-;MELODIC AND HARMONIC INTERVALS  - VOICES MOTIONS (OBLIQUE, DIRECT, CONTRARY AND PARALLEL)
+(defun parallel? (list1 list2)
+ (if (or (null (first list1)) (null (first list2)) 
+	     (null (second list1)) (null (second list2))) 
+	  nil
+ (let ((m1 (s::-v (first list2) (first list1)))
+       (m2 (s::-v (second list2) (second list1))))
+  (s::orv (s::andv (s::>v m1 0) ;same direction - same intervals
+                   (s::>v m2 0)
+	      	       (s::=v m1 m2)) 
+ 	      (s::andv (s::<v m1 0)
+ 	   	           (s::<v m2 0)
+				   (s::=v m1 m2))))))
+				   
+(defun direct? (list1 list2)
+(if (or (null (first list1)) (null (first list2)) 
+     (null (second list1)) (null (second list2))) 
+  nil
+(let ((m1 (s::-v (first list2) (first list1)))
+      (m2 (s::-v (second list2) (second list1))))
+   (s::orv (s::andv (s::>v m1 0) ;same direction - different intervals
+		          (s::>v m2 0)
+		          (s::/=v m1 m2)) 
+	     (s::andv (s::<v m1 0)
+			   (s::<v m2 0)
+		          (s::/=v m1 m2))))))
+				  
+(defun contrary? (list1 list2)
+(if (or (null (first list1)) (null (first list2)) 
+     (null (second list1)) (null (second list2))) 
+  nil
+(let ((m1 (s::-v (first list2) (first list1)))
+      (m2 (s::-v (second list2) (second list1))))			 
+ (s::orv (s::andv (s::<v m1 0) ;opposite directions
+			      (s::>v m2 0)) 
+		 (s::andv (s::>v m1 0)
+		          (s::<v m2 0))))))	
+					  
+(defun oblique? (list1 list2)
+(if (or (null (first list1)) (null (first list2)) 
+     (null (second list1)) (null (second list2))) 
+  nil
+ (let ((m1 (s::-v (first list2) (first list1)))
+       (m2 (s::-v (second list2) (second list1))))					  
+	(s::orv (s::andv (s::=v m1 0)  ;interval 1 = 0 - interval 2 /= 0
+			         (s::/=v m2 0))
+			(s::andv (s::/=v m1 0);interval 1 /= 0 - interval 2 = 0
+				     (s::=v m2 0))))))
 
-(defun voices-mel-har-mot (domain-list1 domain-list2) 	  
- (let* ((voices-combinations-posn (om?::asc-permutations (arithm-ser 0 (1- (length domain-list1)) 1) 2))
-       (voices-combinations (mapcar #'(lambda (x) (posn-match x voices-combinations-posn)) (list domain-list1 domain-list2)))
-       (melodic-intervals (mat-trans (posn-match (mapcar #'(lambda (x y)(?::ifv (s::orv (null x) (null y)) nil (s::-v y x))) domain-list1 domain-list2) voices-combinations-posn)))
-      (jumps? (mapcar #'(lambda (x y)
-                                                 (?::ifv (s::orv (null x) (null y)) nil
-                                                 (?::ifv (s::>v (om?::absv (s::-v y x)) 200) "jump" nil))) 
-                                 domain-list1 domain-list2))
-	   (harmonic-intervals (mapcar #'(lambda (x)
-	                                  (mapcar #'(lambda (y)
-									            (?::ifv (s::orv (null (first y)) (null (second y))) nil 
-										         (om?::absv (s::-v (first y) (second y))))) 
-									   x))
-						    voices-combinations))
-	  (voices-motions (mapcar #'(lambda (m1 m2)
-								 (cond ((s::orv (null m1) (null m2)) "rest")
-	 
-									   ((s::orv (s::andv (s::=v m1 0)
-									                             (s::/=v m2 0)) 
-										       (s::andv (s::/=v m1 0)
-											 	     (s::=v m2 0))) "oblique")
-						 
-								          ((s::orv (s::andv (s::<v m1 0)
-									                            (s::>v m2 0)) 
-										      (s::andv (s::>v m1 0)
-											 	    (s::<v m2 0))) "contrary")	
-							 
-								         ((s::orv (s::andv (s::>v m1 0)
-								                                   (s::>v m2 0)
-											      	   (s::/=v m1 m2)) 
-									 	     (s::andv (s::<v m1 0)
-									 	   	           (s::<v m2 0)
-												   (s::/=v m1 m2))) "direct")
+(defun stepwise? (n1 n2)
+ (s::<=v (om?::absv (s::-v n2 n1)) 200))
 
-								        ((s::orv (s::andv (s::>v m1 0)
-								                                  (s::>v m2 0)
-									      	               	  (s::=v m1 m2)) 
-								 	            (s::andv (s::<v m1 0)
-								 	   	                  (s::<v m2 0)
-												  (s::=v m1 m2))) "parallel")
-									  (t t)))
-					(first melodic-intervals) (second melodic-intervals)))
-              (outer-voices-posn (nth (- (length domain-list1) 2) voices-combinations-posn)))
-               ;voice-count)
+(defun any-step? (list1 list2)
+ (s::orv (stepwise? (second list1) (second list2))
+           (stepwise? (first list1) (first list2))))
 
-;(setf voice-count 0)
+(defun step-upper-voice? (list1 list2)
+ (stepwise? (first list1) (first list2)))
 
-#|
-(mapcar #'(lambda (h1 h2 mot)
- (s::assert!
-  (?::ifv (s::orv (s::=v (mc->pcv h2) 7) (s::=v (mc->pcv h2) 0))
-            (s::orv (s::equalv mot "contrary")  (s::equalv mot "oblique"))))
-|#
- 
- (list melodic-intervals harmonic-intervals voices-motions jumps? outer-voices-posn))) 	  
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;		
+;;; CONSTRAINTS
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; MELODIC-LINE-INTERVALS ;==> IN PROGRESS ADAPT TO SCREAMER
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-#|
-(defun melodic-line-intervals (melody allowed-mel-ints) ;;;R-PITCHES-ONE-VOICE :ALL-PITCHES
-(let* ((asc-or-desc-lines (get-asc-desc-lines melody))
-      (ascending (split-ascending (first asc-or-desc-lines)))
-      (descending (split-descending (second asc-or-desc-lines)))
-      (all-intervals (mapcar #'get-melodic-intervals (om::x-append ascending descending))))
-(loop for interval in all-intervals
-       always (member interval allowed-mel-ints)))) 
+(defmethod! constraint-scale-one-voice ((mode string) (scale list) (voices-list list))		  
+    :initvals '("midics" (0 200 400 500 700 900 1100 1200) (0))
+    :indoc '( "midics/pcs" "list" "list") 
+    :doc "Returns a screamer-score-constraint object." 
+	:menuins '((0 (("midics" "midics") ("pcs" "pcs")))) 
+    :icon 487
 
-(defun get-asc-desc-lines (notes)
-(let ((all-positions
-(loop for n from 0 to (- (length notes) 2)
- if (> (nth n notes) (nth (1+ n) notes))
-    collect (x-append n (1+ n)) into descending
- else 
-    collect (x-append n (1+ n)) into ascending
-finally (return (x-append (list (flat ascending)) 
-                                       (list (flat descending)))))))
-(posn-match notes 
-                        (mapcar #'remove-duplicates all-positions))))
+(if (equal mode "pcs")
+    (let ((constraint (eval `#'(lambda (x) (s::assert! (?::hard-memberv x ,(reclist-vars (mc->pcv scale))))))))
+     (constraint-one-voice constraint  "n-inputs" voices-list "pitch"))
 
-(defun split-ascending (notes)
-(om::group-list 
-notes 
-(om::x->dx 
-(om::x-append 
-0  
-(loop for n from 0 to (- (length notes) 2)
- if (> (nth n notes) (nth (1+ n) notes))
-   collect (1+ n))
-(length notes)))
-'linear))
+    (let ((constraint  (eval `#'(lambda (x) (s::assert! (?::hard-memberv (mc->pcv x) ,(reclist-vars (mc->pcv scale))))))))
+     (constraint-one-voice constraint  "n-inputs" voices-list "pitch"))))
 
-(defun split-descending (notes)
-(om::group-list 
-notes 
-(om::x->dx 
-(om::x-append 
-0  
-(loop for n from 0 to (- (length notes) 2)
- if (< (nth n notes) (nth (1+ n) notes))
-   collect (1+ n))
-(length notes)))
-'linear))
+(defmethod! constraint-chords-alldiff-notes ((mode string) (input-mode string) &optional voices-list)		  
+    :initvals '("midics" "all-voices" nil)
+    :indoc '("midics/pcs" "all-voices/voices-list" "list") 
+    :doc "Returns a screamer-score-constraint object." 
+	:menuins '((0 (("midics" "midics") ("pcs" "pcs")))
+                         (1 (("all-voices" "all-voices") ("voices-list" "voices-list")))) 
+    :icon 487
+    (let ((constraint (if (equal mode "midics")
+                                 (eval ` #'(lambda (x) (om?::assert!-all-differentv (remove nil x)))) 
+                                 (eval `#'(lambda (x) (om?::assert!-all-differentv (mc->pcv (remove nil x))))))))
+    (if (equal input-mode "all-voices")
+       (constraint-harmony constraint  "n-inputs" "all-voices" "all")
+       (constraint-harmony constraint  "n-inputs" "voices-list" "all" voices-list))))
 
-(defun get-melodic-intervals (asc-or-desc-line)
- (abs (- (first asc-or-desc-line) (om::last-elem asc-or-desc-line))))	
-|#					 
+(defmethod! no-crossing-voices ((input-mode string) (unison? string) &optional voices-list)	  
+    :initvals '("all-voices" "no" nil)
+    :indoc '( "all-voices/voices-list" "yes/no" "list") 
+    :doc "Returns a screamer-score-constraint object." 
+    :menuins '((0 (("all-voices" "all-voices") ("voices-list" "voices-list")))
+                         (1 (("no" "no") ("yes" "yes")))) 
+    :icon 487
+    (let ((constraint (if (equal unison? "no")
+                                 (eval `#'(lambda (x) (om?::assert!-apply-rec #'(lambda (y z) (s::>v y z)) x))) 
+                                 (eval `#'(lambda (x) (om?::assert!-apply-rec #'(lambda (y z) (s::>=v y z)) x))))))
+                                     
+    (if (equal input-mode "all-voices")
+       (constraint-harmony constraint  "n-inputs" "all-voices" "all")
+       (constraint-harmony constraint  "n-inputs" "voices-list" "all" voices-list))))
+
+(defmethod! not-parallel-fifths-octaves ((voices-list list))		  
+    :initvals '( ((0 1) (0 2)) )
+    :indoc '("list") 
+    :doc "Returns a screamer-score-constraint object." 
+    :icon 487
+    (let ((constraint
+             (eval `#'(lambda (x y)
+             (if (or (some #'null x) (some #'null y)) 
+                  nil
+               (let ((interval1  (s::funcallv #'mod (om?::absv (s::-v (first x) (second x))) 1200))
+                     (interval2 (s::funcallv #'mod (om?::absv (s::-v (first y) (second y))) 1200)))
+                      
+             (s::assert! 
+              (?::ifv (parallel? x y)
+                   (s::orv (s::notv (s::memberv interval1 '(0 700)))
+                                        (s::notv (s::memberv interval2 '(0 700))))
+
+               t)
+              )
+             )
+            )
+           )
+          )
+        )
+      )
+   (constraint-harmony constraint  "n-inputs" "voices-list" "all" voices-list)))

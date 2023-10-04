@@ -1,68 +1,8 @@
-(in-package :om-screamer)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; ADAPTED FROM SCREAMER PLUS 
-
-(defun list-elements-ofv (x)
-  (let (
-        (z (make-variable))
-        )
-
-     (?::attach-noticer!
-       #'(lambda()
-           (when (and (bound? x) (every #'bound? (value-of x)))
-              (do* (
-                    (dec (?::apply-substitution x) (cdr dec))
-                    (curr (car dec) (car dec))
-                    (vals nil)
-                    )
-                  ((endp dec) 
-                   (assert! (equalv z vals))
-                   )
-                 (push (value-of curr) vals)
-                 )
-              )
-           )
-       x)
-    (funcallv #'reverse z)
-  )
-)
-
-(defun get-variable-type (var)
-  (declare (ignore print-level))
-  (let ((x (value-of var)))
-    (cond
-      ((?::variable? x) 
-        (if (and (not (equal (s::variable-enumerated-domain x) t))
-                           (not (null (s::variable-enumerated-antidomain x))))
-                       (error "This shouldn't happen"))     
-          (cond ((?::variable-type-known? x) (?::variable-get-type x))
-            ((screamer::variable-boolean? x) 'boolean)
-            ((screamer::variable-integer? x) 'integer)
-            ((screamer::variable-real? x) (if (screamer::variable-noninteger? x)
-                                            'noninteger-real
-                                            'real))            
-            ((screamer::variable-number? x)
-              (cond ((screamer::variable-nonreal? x) 'nonreal-number)
-                ((screamer::variable-noninteger? x)  'noninteger-number)
-                (t 'number)))            
-            ((screamer::variable-nonnumber? x) (intern "nonnumber" :om))
-            ((screamer::variable-nonreal? x) (intern "nonreal" :om))
-            ((screamer::variable-noninteger? x) (intern"noninteger" :om))
-            (t 'variable))))))
-			
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
-	    
-(defun reclistv-vars (vars)
- (labels ((reclistv (x)
-           (cond ((atom x) x)  
-                     ((and (listp x) (every #'atom x))
-		       (list-elements-ofv x))
-		     (t  (mapcar #'reclistv x)))))
-  (reclistv vars)))	
-	  					
+(in-package :om-screamer)
+	    	  					
 (defun absv (k)
-   (maxv k (*v k -1)))
+(maxv k (*v k -1)))
 
 (defun modv (n d) 
  (funcallv #'mod n d))
@@ -139,7 +79,7 @@
  (if (null (nth (1- fn-inputs) list))
       accumul
       (let ((one-result (apply fn (mapcar #'(lambda (n) 
-			  	                 (nth n list)) list-inputs)))) 
+			  	                 (nth n list)) list-inputs))))
 	(apply-rec-internal fn (cdr list) (om::x-append accumul one-result))
  ))))
 
@@ -190,11 +130,23 @@
  :icon 485
  (om?::x->dxv list))
 
- (om::defmethod! x->dxv ((listv screamer+::variable+))
+ (om::defmethod! x->dxv ((listv screamer::variable))
  :initvals '((1 2 3 4 5)) :indoc '("variable or list of variables") 
  :doc ""
  :icon 485
 (?::mapcarv #'s::-v (?::cdrv listv) listv))
+
+ (om::defmethod! rx->dxv ((listv screamer::variable))
+ :initvals '((1 2 3 4 5)) :indoc '("variable or list of variables") 
+ :doc "Intervals in reverse order (from last to first)."
+ :icon 485
+(?::mapcarv #'s::-v (?::cdrv (s::funcallv #'reverse listv)) (s::funcallv #'reverse listv)))
+
+ (om::defmethod! rx->dxv ((list list))
+ :initvals '((1 2 3 4 5)) :indoc '("variable or list of variables") 
+ :doc  "Intervals in reverse order (from last to first)."
+ :icon 485
+ (om?::x->dxv (reverse list)))
 
  (om::defmethod! x->dx-absv ((list list))
  :initvals '((1 2 3 4 5)) :indoc '("variable or list of variables") 
@@ -202,7 +154,7 @@
  :icon 478
  (om?::x->dx-absv list))
 
- (om::defmethod! x->dx-absv ((listv screamer+::variable+))
+ (om::defmethod! x->dx-absv ((listv screamer::variable))
  :initvals '((1 2 3 4 5)) :indoc '("variable or list of variables") 
  :doc ""
  :icon 478
@@ -214,7 +166,7 @@
  :icon 485
  (om?::dx->xv start list))
 
- (om::defmethod! dx->xv ((start number) (listv screamer+::variable+))
+ (om::defmethod! dx->xv ((start number) (listv screamer::variable))
  :initvals '(0 (1 2 3 4 5)) :indoc '("variable or number" "variable, list of variables or list") 
  :doc ""
  :icon 485
@@ -237,7 +189,7 @@
 (om::defmethod! om-absv ((lst list))
 (mapcar #'om?::absv lst))
 
-(om::defmethod! om-absv ((var screamer+::variable+))
+(om::defmethod! om-absv ((var screamer::variable))
 :icon 480
 (if (s::variable-number? var)
     (om?::absv var)
@@ -251,35 +203,37 @@
 (om::defmethod! mod12v ((lst list))
 (mapcar #'mod12v lst))
 
-(om::defmethod! mod12v ((var screamer+::variable+))
+(om::defmethod! mod12v ((var screamer::variable))
 :icon 480
 (if (s::variable-number? var)
     (s::funcallv #'mod var 12)
     (?::mapcarv #'(lambda (x) (s::funcallv #'mod x 12)) var)))
 
-(om::defmethod! mc->pcv ((n t))
+(om::defmethod! mc->pcv ((n integer))
 :initvals '(6000) :indoc '("variable, number or list") 
 :icon 479
- (s::/v (om?::modv n 1200) 100))
+(s::/v (om?::modv n 1200) 100))
 
 (om::defmethod! mc->pcv ((n list))
 :initvals '((6000 6400 6700)) :indoc '("variable, number or list") 
 :icon 479
 (mapcar #'mc->pcv n))
 
-(om::defmethod! mc->pcv ((var screamer+::variable+))
+(om::defmethod! mc->pcv ((var screamer::variable))
 :initvals '(6000) :indoc '("variable, number or list") 
 :icon 479
  (if (s::variable-number? var)
-    (s::/v (om?::modv var 1200) 100)
-   (?::mapcarv #'(lambda (x) (s::/v (om?::modv x 1200) 100)) var)))
+     ;(om?::a-mc->pcv var)
+     (s::/v (om?::modv var 1200) 100)
+(?::mapcarv #'(lambda (x) (s::/v (s::funcallv #'mod x 1200) 100) var))))
+
 
 (om::defmethod! all-membersv ((list list) (sequence list))
 :initvals '((11 5 2) (0 2 4 5 7 9 11)) :indoc '("variable or list" "variable or list") 
 :icon 477
-(om?::all-membersv list sequence))
+(om?::all-membersv-alt list sequence))
 
-(om::defmethod! all-membersv ((listv screamer+::variable+) (sequence list))
+(om::defmethod! all-membersv ((listv screamer::variable) (sequence list))
 :initvals '((11 5 2) (0 2 4 5 7 9 11)) :indoc '("variable or list" "variable or list") 
 :icon 477
  (?::everyv #'(lambda (r)(s::equalv r 't)) 
@@ -287,7 +241,7 @@
                 (s::memberv x sequence))
    listv)))
 
-(om::defmethod! all-membersv ((list screamer+::variable+) (sequence screamer+::variable+))
+(om::defmethod! all-membersv ((list list) (sequence screamer::variable))
 :initvals '((11 5 2) (0 2 4 5 7 9 11)) :indoc '("variable or list" "variable or list") 
 :icon 477
  (?::everyv #'(lambda (r)(s::equalv r 't)) 
@@ -301,6 +255,46 @@
 (if (listp list)
 (apply 's::/=v list)
 (s::applyv 's::/=v list)))
+
+(om::defmethod! sort-listv ((list t) (direction string))
+:initvals '(nil "<") :indoc '("list" "string")
+:menuins '((1 (("<" "<") (">" ">"))))
+:icon 474
+(if (not (s::variable? list))
+    (if  (not (some #'s::variable? list))
+         (sort list (if (equal direction "<") #'< #'>))
+ (if (equal direction "<")
+     (s::funcallv #'sort list #'s::<v)
+     (s::funcallv #'sort list #'s::>v)))))
+
+(om::defmethod! quadratic-bezier ((p0 number) (p1 number) (p2 number) (steps integer))
+ :initvals '(6000 4800 7400 20) 
+ :indoc '("number" "number" "number" "integer")
+:doc "Solve a quadratic Bezier curve with three points in a given number of steps."
+ :icon 473
+ (let* ((t-var (interpolation 0 1 steps 0.0))
+        (q0 (mapcar #'(lambda (z) 
+                                (+ (* (expt (- 1 z) 2) p0) 
+                                    (* (- 1 z) (* 2  z) p1) 
+                                    (* (expt z 2) p2)))
+                t-var)))
+(simple-bpf-from-list (om* t-var 1000)
+                                  q0)))
+
+(om::defmethod! cubic-bezier ((p0 number) (p1 number) (p2 number) (p3 number) (steps integer)) 
+ :initvals '(3600 2100 8400 6000 20) 
+ :indoc '("number" "number" "number" "number" "integer")
+:doc "Solve a cubic Bezier curve with four points in a given number of steps."
+ :icon 473
+ (let* ((t-var (interpolation 0 1 steps 0.0))
+        (c0 (mapcar #'(lambda (z) 
+                                (+ (* (expt (- 1 z) 3) p0) 
+                                    (* 3 (expt (- 1 z) 2) z p1) 
+                                    (* 3 (- 1 z) (expt z 2) p2) 
+                                    (* (expt z 3) p3))) 
+                t-var)))
+(simple-bpf-from-list (om* t-var 1000)
+                                  c0)))
 
 ; -----------------------------------------
 
@@ -371,6 +365,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
  ;;; UPDATE FUNCTIONS-WITHOUT-NAME
  
-(setf *function-without-name* (let ((defaults *function-without-name*)) (x-append (list 'om*v 'om-v 'om+v 'om/v) defaults)))
+(setf *function-without-name* 
+ (let ((defaults *function-without-name*)) 
+  (x-append (list 'om*v 'om-v 'om+v 'om/v) defaults)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

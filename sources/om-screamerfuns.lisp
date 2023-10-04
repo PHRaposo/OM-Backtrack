@@ -95,15 +95,48 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 (defun sumv (list)
   (reduce-chunks #'+v list :default 0))
 
-#|
-(defun all-membersv (e sequence)
+(defun lists=v (list1 list2 &optional symbol-mode)
+  (apply #'andv
+         (mapcar #'(lambda (a b) (=v a b))
+                 list1
+                 list2)))
+
+(defun a-permutation-of (list)
+  (if (null list)
+      nil
+    (let ((i (an-integer-between 0 (1- (length list)))))
+      (append (list (elt list i))
+              (a-permutation-of 
+               (append (subseq list 0 i)
+                       (subseq list (1+ i) (length list))))))))
+
+(defun a-permutation-ofv (list &key symbol-mode)
+  (let ((vars (mapcar #'(lambda (x) 
+                          (let ((v (an-integerv)))
+                            (assert! (memberv v list))
+                            v))
+                      list))
+        (perms (all-values (a-permutation-of list))))
+    (assert! (reduce-chunks 
+              #'orv                            
+              (mapcar #'(lambda (p) (lists=v p vars))
+                      perms)))
+    vars))
+
+(defun all-membersv-alt (e sequence)
   (let ((sequence-flat (om::flat sequence)))
    (cond ((listp e) (reduce-chunks #'andv (mapcar #'(lambda (x) (memberv x sequence-flat)) (om::flat e))))
           (t (memberv e sequence-flat)))))
-|#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; OM-SCREAMER   
+
+(defvar *max-midic* 10800) ;This can be changed if needed...
+(defvar *min-midic* 0)
+(defvar *midics-range* (om::arithm-ser 0 10800 100))
+(defvar *midi-range* (om::arithm-ser 21 108 1))
+(defvar *midics-approx* 100)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; VARIABLES GENERATORS
 
@@ -170,16 +203,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
  (mapcar #'assert!-all-differentv v)
 (value-of v)))
 
-#| ;TOO SLOW
-(defun list-of-chords-inv-domains (lst1 lst2 &optional random?)
- (let ((v (if random?
-             (mapcar #'(lambda (x) (list-of-random-members-ofv (length lst1) x)) lst2) 
-             (mapcar #'(lambda (x) (list-of-members-ofv (length lst1) x)) lst2)))) 
- (mapcar #'(lambda (x) (all-ascendingv x)) v)
- (mapcar #'assert!-all-differentv v)
-(value-of v)))
-|#
-
 (defun list-of-random-members-ofv (n dom)
   (if (zerop n) nil
       (cons (a-random-member-ofv dom)
@@ -189,12 +212,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
   (if (zerop n) nil
       (cons (an-integer-modv (an-integerv) d)
             (list-of-integers-modv (1- n) d))))
-
-(defun list-of-mcs->pcsv (mcs)
-(mapcar #'a-mc->pcv mcs))
-
-(defun random-test (list)
-  (nthv (funcallv #'random (1- (length list))) list))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; NEW-VARIABLES 
@@ -232,22 +249,53 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 ; N = (* D X + REM-X)
 ; REM-X = N - (* D X)
 
-(defun member-of-pcv? (var pc-list)
- (let ((pcv (om::mc->pcv var)))
-  (assert! (memberv pcv pc-list))
- (memberv var (all-values (solution pcv (static-ordering #'linear-force))))))
-    
-(defun a-mc->pcv (n)
- (let ((x (an-integerv)))
-  (assert! (=v x (/v (an-integer-modv n 1200) 100)))
-(value-of x)))
-
 (defun first-nv (list n)
   (ifv (<v (lengthv list) n) list)
    (funcallv #'butlast list (-v (lengthv list) n)))
 
 (defun last-nv (list n)
   (funcallv #'last list n))
+
+(defun a-mcv (approx)
+ (let ((v (an-integerv))
+        (a (/ 200 approx)))
+ (assert! (<=v v *max-midic*))
+(assert! (>=v v *min-midic*))
+(assert! (integerpv (/v v a)))
+(value-of v)))
+
+(defun list-of-mcv (n approx)
+  (if (zerop n) nil
+      (cons (a-mcv approx)
+            (list-of-mcv (1- n) approx))))
+
+(defun a-mc-member-ofv (approx domain)
+ (let ((v (a-mcv approx)))
+ (assert! (memberv v domain))
+(value-of v)))
+
+(defun a-random-mc-member-ofv (approx domain)
+ (let ((v (a-mcv approx)))
+ (assert! (memberv v (om::permut-random domain)))
+(value-of v)))
+
+(defun list-of-mc-members-ofv (n approx dom)
+  (if (zerop n) nil
+      (cons (a-mc-member-ofv approx dom)
+            (list-of-mc-members-ofv (1- n) approx dom))))
+
+(defun list-of-random-mc-members-ofv (n approx dom)
+  (if (zerop n) nil
+      (cons (a-random-mc-member-ofv approx dom)
+            (list-of-random-mc-members-ofv (1- n) approx dom))))
+
+(defun list-of-mc-chords-inv (lst1 approx lst2 &optional random?)
+ (let ((v (mapcar #'(lambda (x)
+             (if random? (list-of-random-mc-members-ofv x approx lst2 ) (list-of-mc-members-ofv x approx (reverse lst2)))) 
+            lst1)))
+ (mapcar #'(lambda (x) (all-ascendingv x)) v)
+ (mapcar #'assert!-all-differentv v)
+(value-of v)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; NEW FUNCTIONS 
@@ -391,5 +439,3 @@ but the larger jump has to be below the smaller one."
 (defun symm? (var-list)
  (let ((int-mod12v (om::mod12v (x->dxv var-list))))
 (assert! (equalv int-mod12v (reverse int-mod12v)))))
-
-  
