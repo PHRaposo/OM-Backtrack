@@ -44,7 +44,6 @@
 	
 (in-package :om)
 
-
 ;--------------------------------------------------
 ;Variable definiton with files to load 
 ;--------------------------------------------------
@@ -59,22 +58,23 @@
                          (om::om-relative-path '("sources") "om-preferences")					 						 
                          (om::om-relative-path '("sources" "closer-mop") "closer-mop-packages")
                          (om::om-relative-path '("sources" "closer-mop") "closer-mop-shared")
-                         (om::om-relative-path '("sources" "closer-mop") "closer-lispworks")
-                         (om::om-relative-path '("sources" "screamer-plus") "screamer-plus")					 					  
+                         (om::om-relative-path '("sources" "closer-mop") "closer-clisp")						 					 
+                         (om::om-relative-path '("sources" "closer-mop") "closer-lispworks")	 		  
+                         (om::om-relative-path '("sources" "screamer-plus") "screamer-plus")				 					  
 			             (om::om-relative-path '("sources") "screamboxes")
                          (om::om-relative-path '("sources") "screamfuns")
-                         (om::om-relative-path '("sources") "screaminterface")						 
+                         (om::om-relative-path '("sources") "screaminterface")		 					 
 			             (om::om-relative-path '("sources") "non-deter-patch")
-			             (om::om-relative-path '("sources") "package")
+			             (om::om-relative-path '("sources") "package") 
 			             (om::om-relative-path '("sources") "om-methods")						 
-			             (om::om-relative-path '("sources") "om-screamerfuns")						 	 
-			             (om::om-relative-path '("sources") "screamer-solver")
-			             (om::om-relative-path '("sources") "screamer-score") 
+			             (om::om-relative-path '("sources") "om-screamerfuns")
                          (om::om-relative-path '("sources" "pc-set-theory") "SCs-data")
-                         (om::om-relative-path '("sources" "pc-set-theory") "all-SCs")						 						 
-                         (om::om-relative-path '("sources" "pc-set-theory") "pc-set-theory")
-			             (om::om-relative-path '("sources") "constraint-utils")						 						 						  
-                         ))
+                         (om::om-relative-path '("sources" "pc-set-theory") "all-SCs")
+                         (om::om-relative-path '("sources" "pc-set-theory") "pc-set-theory") 						 	 
+			             (om::om-relative-path '("sources") "screamer-solver")
+			             (om::om-relative-path '("sources") "screamer-score") 	 					 						 											 
+			             (om::om-relative-path '("sources") "constraint-utils")	
+                          ))
 						 
 ;--------------------------------------------------
 ;Loading files 
@@ -103,7 +103,9 @@
  					 ) Nil Nil Nil)
 	   		       ("Screamer-Score"
 	   		        (("main-functions" nil nil (screamer-score screamer-score-domain constraint-one-voice constraint-harmony constraint-profile constraint-measure) nil)
-	  				 ("utils" nil nil (contain-variables? pcset-equalv) nil)
+	  				 ("utils" nil nil (contain-variables? pcset-equalv constraint-scale-one-voice 
+						               constraint-chords-alldiff-notes no-crossing-voices not-parallel-fifths-octaves 
+									   constraint-chord-setclass quadratic-bezier cubic-bezier) nil)
 	   			     ) Nil Nil Nil)									   
 		       ("Screamer"
 		           (("primitives" nil nil (s::an-integer-between s::a-member-of s::fail) nil)
