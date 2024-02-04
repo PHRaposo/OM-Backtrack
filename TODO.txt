@@ -1,0 +1,54 @@
+TODO 
+
+;===============================================================;
+;=> OM-BACKTRACK
+;===============================================================;
+
+- INCLUDE A-RANDOM-MEMBER-OF (MENU - SCREAMERBOXES - MOVE TO SCREAMER PACKAGE) 
+- FIX LISTENER (RESIZE POLY OBJECT)
+- FIX LAMBDA - NONDETERMINISTIC PATCHES
+- FIX OMLISPPATCH CONFLICT
+- NONDETERMINISTIC OMLOOP ?
+- OMNG-COPY? SCREAMERBOXES (?)
+
+;===============================================================;
+;=> SCREAMER-SOLVER
+;===============================================================;
+
+- NEW ORDERING FORCE-FUNCTION OPTIONS (SCREAMER-SOLUTION FUNCTION)
+ 
+;===============================================================;   
+;=> SCREAMER-SCORE
+;===============================================================;
+
+- CONSTRAINT-HARMONY DOMAIN OPTIONS (PITCH - PITCH/DUR - PITCH/ONSET - PITCH-DUR-ONSET)
+
+- CONSTRAINT-MEASURE BEATS OPTIONS (ALL BEATS - FIRST BEATS - ONBEAT - OFFBEAT)
+
+- GUITAR 
+  * (DIFFICULT LEVELS FOR CHORDS (EASY - INTERMEDIATE - HARD - VERY-HARD)
+  * NEW CONSTRAINT FOR OPEN STRINGS TO AVOID HARD OR IMPOSSIBLE POSITIONS
+
+- HEURISTICS?
+
+- RHYTHMIC FUNCTIONS
+
+- TUTORIALS (EXPLANATIONS ABOUT SCREAMER, VARIABLES, SCREAMER-SOLVER,
+SCREAMER SCORE (MAIN FUNCTION, HOW TO BUILD CONSTRAINTS (ONE-VOICE, HARMONY, PROFILE, PERCENTAGE), ADD An EXPLANATORY TEXT FOR EACH EXAMPLE PATCH. 
+
+;===============================================================;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
