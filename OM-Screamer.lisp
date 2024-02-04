@@ -32,13 +32,7 @@
 ;;; * CLOSER-MOP by Pascal Costanza
 ;;;   Copyright (c) 2005 - 2016 Pascal Costanza
 ;;;
-;;; * ITERATE by Jonathan Amsterdam
-;;;	  Adapted to ANSI Common Lisp in 2003 by Andreas Fuchs
-;;;	  Copyright 1989, Jonathan Amsterdam.
-;;;
 ;;; * Code excerpts from t2l-screamer by Killian Sprotte
-;;;
-;;; * Retract (extension to Screamer) by Buddy Kresge 
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	
@@ -52,14 +46,10 @@
 (setf  *screamer-files* (list	
                          (om::om-relative-path '("sources" "screamer 4.0.0") "package")
                          (om::om-relative-path '("sources" "screamer 4.0.0") "screamer")
-                         (om::om-relative-path '("sources" "iterate") "package")	
-                         (om::om-relative-path '("sources" "iterate") "iterate")
-                         (om::om-relative-path '("sources" "retract") "retract")
                          (om::om-relative-path '("sources") "om-preferences")					 						 
                          (om::om-relative-path '("sources" "closer-mop") "closer-mop-packages")
-                         (om::om-relative-path '("sources" "closer-mop") "closer-mop-shared")
-                         (om::om-relative-path '("sources" "closer-mop") "closer-clisp")						 					 
-                         (om::om-relative-path '("sources" "closer-mop") "closer-lispworks")	 		  
+                         (om::om-relative-path '("sources" "closer-mop") "closer-mop-shared")						 					 
+                         (om::om-relative-path '("sources" "closer-mop") "closer-lispworks") 		  
                          (om::om-relative-path '("sources" "screamer-plus") "screamer-plus")				 					  
 			             (om::om-relative-path '("sources") "screamboxes")
                          (om::om-relative-path '("sources") "screamfuns")
@@ -72,8 +62,9 @@
                          (om::om-relative-path '("sources" "pc-set-theory") "all-SCs")
                          (om::om-relative-path '("sources" "pc-set-theory") "pc-set-theory") 						 	 
 			             (om::om-relative-path '("sources") "screamer-solver")
-			             (om::om-relative-path '("sources") "screamer-score") 	 					 						 											 
+			             (om::om-relative-path '("sources") "screamer-score") ;added constraint-profile with new range (list)- 18.12.2023							 
 			             (om::om-relative-path '("sources") "constraint-utils")	
+			             (om::om-relative-path '("sources") "guitar")							 
                           ))
 						 
 ;--------------------------------------------------
@@ -90,7 +81,7 @@
 	                                   list-of-chords-in alldiff? growing?) Nil)
  		       ("SCS"
  		          (("solver" nil nil (screamer-solver force-function screamer-doc) nil)
-				   ("om-methods" nil nil (om+v om-v om*v om/v mc->pcv mod12v om-absv x->dxv x->dx-absv dx->xv all-membersv not-intersectionv all-diffv) nil)
+				   ("om-methods" nil nil (om+v om-v om*v om/v mc->pcv modv mod12v om-absv x->dxv x->dx-absv dx->xv all-membersv not-intersectionv all-diffv) nil)
 				   ("variables" nil nil (screamer-variable list-ofvs list-of-lists-ofv list-of-chords-inv) nil)
 				   ("functions" nil nil (apply-contv om?::assert!-apply-rec om?::apply-rec om?::funcallv-rec om?::funcallv-rec-car-cdr) nil)
 				   ("pc-set-theory" 
@@ -99,13 +90,15 @@
 					  nil nil nil)   				 
   				   ("constraints" 					   
 					    (("general" nil nil (om?::assert!-all-differentv) nil)) nil nil nil)					 
-				   ("utils" nil nil (om?::smat-trans om?::all-rotations om?::modv) nil)
+				   ("utils" nil nil (om?::smat-trans om?::all-rotations om?::modv om?::sumv ) nil)
  					 ) Nil Nil Nil)
 	   		       ("Screamer-Score"
 	   		        (("main-functions" nil nil (screamer-score screamer-score-domain constraint-one-voice constraint-harmony constraint-profile constraint-measure) nil)
 	  				 ("utils" nil nil (contain-variables? pcset-equalv constraint-scale-one-voice 
 						               constraint-chords-alldiff-notes no-crossing-voices not-parallel-fifths-octaves 
 									   constraint-chord-setclass quadratic-bezier cubic-bezier) nil)
+  				    ("instruments" 					   
+					     (("guitar" nil nil (guitar-playable-chord guitar-fret-string->mc guitar-setup) nil)) nil nil nil)				   
 	   			     ) Nil Nil Nil)									   
 		       ("Screamer"
 		           (("primitives" nil nil (s::an-integer-between s::a-member-of s::fail) nil)
@@ -139,13 +132,14 @@
 							screamer+::noteveryv screamer+::notanyv screamer+::at-leastv screamer+::at-mostv screamer+::exactlyv screamer+::constraint-fn) nil)
 						;("stream-output" nil nil (screamer+::formatv) nil)		
 						("functions" nil nil (s::funcallgv) nil)
+						("additions" nil nil (?::list-elements-ofv ?::make-mcsetv ?::make-setv ?::make-all-equal ?::interval-memberv ?::interval-notv-memberv
+							?::abs-interval-memberv ?::abs-interval-notv-memberv ?::hard-memberv ?::mod-interval-memberv ?::mod-interval-notv-memberv) nil)
 	 					) Nil Nil Nil)
 
                 ;("FOLDER" Nil Nil (package::FUNCTION) Nil)
 
                  ))
-				 
-				
+ 				
 (print (format nil "
 OM-SCREAMER LIBRARY
 Includes:
@@ -177,12 +171,6 @@ Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
   
 * CLOSER-MOP by Pascal Costanza 
   Copyright (c) 2005 - 2016 Pascal Costanza
-	  
-* ITERATE by Jonathan Amsterdam
-  Adapted to ANSI Common Lisp in 2003 by Andreas Fuchs
-  Copyright 1989, Jonathan Amsterdam.
   
-* Code excerpts from t2l-screamer by Killian Sprotte
-
-* Retract (extension to Screamer) by Buddy Kresge" 
+* Code excerpts from t2l-screamer by Killian Sprotte" 
 s::*screamer-version* ?::*screamer+-version*))
