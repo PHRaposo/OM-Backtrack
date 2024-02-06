@@ -59,7 +59,7 @@ Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
   (let* ((name (string+ "OM-SCREAMER " *om-screamer-version-string*))
          (textcolor *om-white-color*)
          (mainfont  (om-make-font "Verdana" (nth 0 *om-def-font-sizes*)))
-         (boldfont  (om-make-font "Verdana" (nth 0 *om-def-font-sizes*) :style '(:bold)))
+         ;(boldfont  (om-make-font "Verdana" (nth 0 *om-def-font-sizes*) :style '(:bold)))
          (view (om-make-view 'splash-screen
                              :thepict *screamer-graph-pres*
                              :size (om-add-points 
@@ -141,8 +141,9 @@ Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
                                  :bg-color *om-light-gray-color*
                                   ))
                                        
-        (l1 20) (l2 (round (om-point-h (get-pref-scroll-size)) 2)) (i 0)
-        (dy #-linux 30 #+linux 33) sf2txt)
+        ;(l1 20) (l2 (round (om-point-h (get-pref-scroll-size)) 2)) (i 0)
+        ;(dy #-linux 30 #+linux 33) sf2txt
+		pos)
     
 	    (om-add-subviews thescroll
 	                     (om-make-dialog-item 'om-static-text (om-make-point 20 (setf pos 15)) (om-make-point 200 30) "Screamer Valuation"

@@ -39,10 +39,14 @@ TODO
 SCREAMER SCORE (MAIN FUNCTION, HOW TO BUILD CONSTRAINTS (ONE-VOICE, HARMONY, PROFILE, PERCENTAGE), ADD An EXPLANATORY TEXT FOR EACH EXAMPLE PATCH. 
 
 ;===============================================================;
+;=> PC-SET-THEORY
+;===============================================================;
 
+ - NORMAL-ORDER
 
+ - NORMAL-ORDERV
 
-
+;===============================================================;
 
 
 

@@ -195,7 +195,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
 (defun sumv (list)
   (reduce-chunks #'+v list :default 0))
 
-(defun lists=v (list1 list2 &optional symbol-mode)
+(defun lists=v (list1 list2) ;&optional symbol-mode)
   (apply #'andv
          (mapcar #'(lambda (a b) (=v a b))
                  list1
@@ -210,12 +210,13 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE."
                (append (subseq list 0 i)
                        (subseq list (1+ i) (length list))))))))
 
-(defun a-permutation-ofv (list &key symbol-mode)
-  (let ((vars (mapcar #'(lambda (x) 
-                          (let ((v (an-integerv)))
-                            (assert! (memberv v list))
-                            v))
-                      list))
+(defun a-permutation-ofv (list) ;&key symbol-mode)
+  (let ((vars (list-of-members-ofv (length list) list)) 
+	           ;(mapcar #'(lambda (x) 
+               ;           (let ((v (an-integerv)))
+               ;             (assert! (memberv v list))
+               ;             v))
+               ;       list))
         (perms (all-values (a-permutation-of list))))
     (assert! (reduce-chunks 
               #'orv                            

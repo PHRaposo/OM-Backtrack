@@ -1,6 +1,6 @@
 (in-package :s)
 
-(setf *compte-bt* 0)
+;(setf *compte-bt* 0)
 
 ;(defun fail ()
 ;  (setf *compte-bt* (1+ *compte-bt*))

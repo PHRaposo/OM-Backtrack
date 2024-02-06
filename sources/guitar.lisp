@@ -57,10 +57,10 @@
 (defvar *note-fret-string* nil)
 (setf *note-fret-string* nil)
 
-(defvar *note-fret-string-hash* (make-hash-table :test #'equalv))
+;(defvar *note-fret-string-hash* (make-hash-table :test #'equalv))
  	
-(defun get-fret-stringv (var)
- (funcallv #'gethash var *note-fret-string-hash*))
+;(defun get-fret-stringv (var)
+; (funcallv #'gethash var *note-fret-string-hash*))
 	
  (defvar *fret-string-and-note* nil)
 
@@ -89,7 +89,7 @@
         (progn (setf *guitar-tuning* '(6400 5900 5500 5000 4500 4000)) 
 			   (set-guitar-fret-string-notes frets-list)
 			   (set-all-guitar-notes-frets-strings)
-			   (fill-guitar-note-fret-string-hash)
+			   ;(fill-guitar-note-fret-string-hash)
 			   (set-fret-string-and-note)
 			   (fill-fret-string-and-note-hash)
 		))
@@ -98,7 +98,7 @@
 	    (progn (setf *guitar-tuning* open-strings)  
 			   (set-guitar-fret-string-notes frets-list)
 			   (set-all-guitar-notes-frets-strings)			   
-			   (fill-guitar-note-fret-string-hash)
+			   ;(fill-guitar-note-fret-string-hash)
 			   (set-fret-string-and-note)
 			   (fill-fret-string-and-note-hash)	   
 		))
@@ -128,13 +128,13 @@
                                  collect (cdr nfs))))))
  )
  
-(defun fill-guitar-note-fret-string-hash ()
+#|(defun fill-guitar-note-fret-string-hash ()
 (let ((note-fret-string *note-fret-string*)) 
  (clrhash *note-fret-string-hash*)
  (dolist (n-f-s note-fret-string) 
    (setf (gethash (first n-f-s) *note-fret-string-hash*)  
          (second n-f-s)))					
-))
+))|#
 
 (defun get-open-string-number (open-strings)
  (mapcar #'(lambda (open-string) 
@@ -437,7 +437,7 @@ FRETS-LIST: ~A"
  (defun count-occurrencesv (elemv listv)
   (apply #'count-truesv (mapcar #'(lambda (list-elemv)(eqv elemv list-elemv)) listv)))
 	   
- (defun gen-2-fret-prime()
+#|(defun gen-2-fret-prime()
      (let ((2-fret-prime (list-of-integers-betweenv 2 1 (1+ *maximum-fret-distance*))))
 		
   (assert! (=v (first 2-fret-prime) 1))	
@@ -463,27 +463,27 @@ FRETS-LIST: ~A"
 	                      (equalv 4-fret-prime x))
 	       '((1 1 4 4) (1 1 5 5) (1 2 2 5) (1 2 3 5) (1 2 4 5) (1 2 5 5) (1 3 3 5) (1 3 5 5) (1 4 4 4) (1 4 4 5) (1 4 5 5) (1 5 5 5))))	  
  
-  (all-values (solution 4-fret-prime (static-ordering #'linear-force)))))	 		 
+  (all-values (solution 4-fret-prime (static-ordering #'linear-force)))))|#	 		 
  		
- (defvar *2-fret-prime* nil)
+ #|(defvar *2-fret-prime* nil)
  (setf *2-fret-prime* 
-	 '((1 1) (1 2) (1 3) (1 4) (1 5)))
+	 '((1 1) (1 2) (1 3) (1 4) (1 5)))|#
 	
  (defvar *2-fret-prime-intervals* nil)  
  (setf *2-fret-prime-intervals* '((0) (1) (2) (3) (4))) 	 
 	 
 
- (defvar *3-fret-prime* nil)
+ #|(defvar *3-fret-prime* nil)
  (setf *3-fret-prime* 
 	 '((1 1 1) (1 1 2) (1 1 3) (1 1 4) (1 1 5) (1 2 2) (1 2 3) (1 2 4) (1 2 5) (1 3 3) (1 3 4) (1 3 5)
 	   ;(1 4 4) (1 4 5) (1 5 5)
 	   )
-  )
+  )|#
 
 (defvar *3-fret-prime-intervals* nil) 
 (setf *3-fret-prime-intervals* '((0 0) (0 1) (0 2) (0 3) (0 4) (1 0) (1 1) (1 2) (1 3) (2 0) (2 1) (2 2) (3 1)))
 	 
- (defvar *4-fret-prime* nil)
+ #|(defvar *4-fret-prime* nil)
  (setf *4-fret-prime* 
      '((1 1 1 1) (1 1 1 2) (1 1 1 3) (1 1 1 4) (1 1 1 5) (1 1 2 2) (1 1 2 3) (1 1 2 4) (1 1 2 5) (1 1 3 3) (1 1 3 4) (1 1 3 5) ;(1 1 4 4)
 	   (1 1 4 5) ;(1 1 5 5)
@@ -497,28 +497,28 @@ FRETS-LIST: ~A"
 	 ;(1 4 5 5) 
 	 ;(1 5 5 5)
 	 )
- )
+ )|#
  
  (defvar *4-fret-prime-intervals* nil) 
  (setf *4-fret-prime-intervals* '((0 0 0) (0 0 1) (0 0 2) (0 0 3) (0 0 4) (0 1 0) (0 1 1) (0 1 2) (0 1 3) (0 2 0) (0 2 1) (0 2 2) (0 3 1)
                                   (1 0 0) (1 0 1) (1 0 2) (1 1 0) (1 1 1) (1 2 0) (2 0 0) (2 0 1) (2 1 0) (2 1 1)))
  
- (defvar *5-fret-prime* nil)
+ #|(defvar *5-fret-prime* nil)
  (setf *5-fret-prime* 
 	 '((1 1 1 1 1) (1 1 1 1 2) (1 1 1 1 3) (1 1 1 1 4) (1 1 1 1 5) (1 1 1 2 2) (1 1 1 2 3) (1 1 1 2 4) (1 1 1 2 5) (1 1 1 3 3) (1 1 1 3 4) (1 1 1 3 5) 
 	   (1 1 1 4 5) (1 1 2 2 2) (1 1 2 2 3) (1 1 2 2 4) (1 1 2 3 3) (1 1 2 3 4) (1 1 2 4 4) (1 1 3 3 3) (1 1 3 3 4) (1 1 3 4 4) (1 1 3 4 5))
- )
+ )|#
  
  (defvar *5-fret-prime-intervals* nil) 
  (setf *5-fret-prime-intervals* '((0 0 0 0) (0 0 0 1) (0 0 0 2) (0 0 0 3) (0 0 0 4) (0 0 1 0) (0 0 1 1) (0 0 1 2) (0 0 1 3) (0 0 2 0) (0 0 2 1) (0 0 2 2) 
 	 (0 0 3 1) (0 1 0 0) (0 1 0 1) (0 1 0 2) (0 1 1 0) (0 1 1 1) (0 1 2 0) (0 2 0 0) (0 2 0 1) (0 2 1 0) (0 2 1 1))) 
  	 			
-(defvar *6-fret-prime* nil)
+#|(defvar *6-fret-prime* nil)
  (setf *6-fret-prime* 
 	 '((1 1 1 1 1 1) (1 1 1 1 1 2) (1 1 1 1 1 3) (1 1 1 1 1 4) (1 1 1 1 1 5) (1 1 1 1 2 2) (1 1 1 1 2 3) (1 1 1 1 2 4) 
 	   (1 1 1 1 2 5) (1 1 1 1 3 3) (1 1 1 1 3 4) (1 1 1 1 3 5) (1 1 1 1 4 5) (1 1 1 2 2 2) (1 1 1 2 2 3) (1 1 1 2 2 4)
 	   (1 1 1 2 3 3) (1 1 1 2 3 4) (1 1 1 2 4 4) (1 1 1 3 3 3) (1 1 1 3 3 4) (1 1 1 3 4 4) (1 1 1 3 4 5))
- )
+ )|#
 
  (defvar *6-fret-prime-intervals* nil) 
  (setf *6-fret-prime-intervals* '((0 0 0 0 0) (0 0 0 0 1) (0 0 0 0 2) (0 0 0 0 3) (0 0 0 0 4) (0 0 0 1 0) (0 0 0 1 1) (0 0 0 1 2) (0 0 0 1 3) 
@@ -810,7 +810,7 @@ FRETS-LIST: ~A"
  
  (defmethod! guitar-fret-string->mc ((fret-string list) &optional vars)		  
      :initvals '(((0 1)) nil)
-     :indoc '("list-of-lists" "variables") 
+     :indoc '("list or list-of-lists" "variables") 
      :doc "Return the note (in midicent) that corresponds to the the fret and string on the guitar. If the optional argument is supplied,
 	 constraints a pitch variable (or list of variables) to match the guitar fret and string." 
      :icon 487
@@ -822,8 +822,10 @@ FRETS-LIST: ~A"
 	              (s::assert! (s::=v var (om?::get-note-from-fret-string fs))))
 		vars fret-string)
     (if (and (listp vars) (every #'listp vars))
- 	   (mapcar #'guitar-fret-string->mc fret-string vars)			
-  (om?::get-note-from-fret-string fret-string))))))
+ 	   (mapcar #'guitar-fret-string->mc fret-string vars))))
+(if (and (listp fret-string) (every #'atom fret-string))			
+  (om::list! (om?::get-note-from-fret-string fret-string))
+  (mapcar #'om?::get-note-from-fret-string fret-string))))
 
 (defmethod! guitar-setup ((n-strings integer) (tuning t) (max-fret-dist integer) &optional open-strings frets-list)		  
     :initvals '(6 :standard 4 (6400 5900 5500 5000 4500 4000) (12 12 12 12 12 12))

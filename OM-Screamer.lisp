@@ -60,9 +60,9 @@
 			             (om::om-relative-path '("sources") "om-screamerfuns")
                          (om::om-relative-path '("sources" "pc-set-theory") "SCs-data")
                          (om::om-relative-path '("sources" "pc-set-theory") "all-SCs")
-                         (om::om-relative-path '("sources" "pc-set-theory") "pc-set-theory") 						 	 
+                         (om::om-relative-path '("sources" "pc-set-theory") "pc-set-theory")  						 	 
 			             (om::om-relative-path '("sources") "screamer-solver")
-			             (om::om-relative-path '("sources") "screamer-score") ;added constraint-profile with new range (list)- 18.12.2023							 
+			             (om::om-relative-path '("sources") "screamer-score")					 
 			             (om::om-relative-path '("sources") "constraint-utils")	
 			             (om::om-relative-path '("sources") "guitar")							 
                           ))
@@ -83,14 +83,10 @@
  		          (("solver" nil nil (screamer-solver force-function screamer-doc) nil)
 				   ("om-methods" nil nil (om+v om-v om*v om/v mc->pcv modv mod12v om-absv x->dxv x->dx-absv dx->xv all-membersv not-intersectionv all-diffv) nil)
 				   ("variables" nil nil (screamer-variable list-ofvs list-of-lists-ofv list-of-chords-inv) nil)
-				   ("functions" nil nil (apply-contv om?::assert!-apply-rec om?::apply-rec om?::funcallv-rec om?::funcallv-rec-car-cdr) nil)
-				   ("pc-set-theory" 
-					(("constraints" nil nil (om?::pc-setpv? om?::sub-setpv? om?::member-of-scv?) nil)
-					 ("SCs" nil nil (om?::SC-name om?::SC+off om?::SCs-card om?::SC-info om?::sub/supersets om?::SC-subsets) nil))
-					  nil nil nil)   				 
+				   ("functions" nil nil (apply-contv om?::assert!-apply-rec om?::apply-rec om?::funcallv-rec om?::funcallv-rec-car-cdr) nil)  				 
   				   ("constraints" 					   
 					    (("general" nil nil (om?::assert!-all-differentv) nil)) nil nil nil)					 
-				   ("utils" nil nil (om?::smat-trans om?::all-rotations om?::modv om?::sumv ) nil)
+				   ("utils" nil nil (om?::smat-trans om?::all-rotations om?::sumv ) nil)
  					 ) Nil Nil Nil)
 	   		       ("Screamer-Score"
 	   		        (("main-functions" nil nil (screamer-score screamer-score-domain constraint-one-voice constraint-harmony constraint-profile constraint-measure) nil)
@@ -99,7 +95,13 @@
 									   constraint-chord-setclass quadratic-bezier cubic-bezier) nil)
   				    ("instruments" 					   
 					     (("guitar" nil nil (guitar-playable-chord guitar-fret-string->mc guitar-setup) nil)) nil nil nil)				   
-	   			     ) Nil Nil Nil)									   
+	   			     ) Nil Nil Nil)
+  	   		       ("pc-set-theory"
+  	   		        (("constraints" nil nil (om?::set-classpv? om?::sub-setpv? om?::member-of-scv?) ;om?::normal-orderv) 
+						nil)
+  	  				 ("SCs" nil nil (om?::SC-name om?::SC+off om?::SCs-card om?::SC-info om?::sub/supersets om?::SC-subsets) ;om?::normal-order) 
+						 nil)) 
+					Nil Nil Nil)									   
 		       ("Screamer"
 		           (("primitives" nil nil (s::an-integer-between s::a-member-of s::fail) nil)
 				    ("variables" nil nil (s::a-member-ofv s::an-integerv s::an-integer-abovev s::an-integer-belowv s::an-integer-betweenv

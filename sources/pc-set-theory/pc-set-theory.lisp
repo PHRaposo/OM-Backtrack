@@ -290,6 +290,7 @@ z))
 ;===============================================
 ;;; OM METHODS 
 ;===============================================
+;===> CONSTRAINTS 
 
 (om::defmethod! member-of-scv? ((vars t) (sc-list list) (mode string))  
   :initvals '((nil) (om::3-11a om::3-11b) "midics") 
@@ -301,14 +302,14 @@ z))
     (member-of-setclassv vars (om-symb->om? sc-list))
     (member-of-setclassv-pcs vars (om-symb->om? sc-list))))
 
-(om::defmethod! pc-setpv? ((vars t) (pc-set list))  
+(om::defmethod! set-classpv? ((vars t) (pc-set list))  
   :initvals '((nil) (0 4 7)) 
 :indoc '("list of screamer variables => midics" "fn or integers") 
   :doc "Constraint a list of Screamer variables <integers-between 0 11> to be all members of the selected pc-set <list of integers>."
     :icon 487
-  (pcv? vars (fnv-pcs pc-set)))
+  (pcv? vars (car (gethash (sort  (remove-duplicates pc-set) #'<) *all-possible-chroma-subsets-hash*))))
 
-(om::defmethod! pc-setpv? ((vars t) (pc-set symbol))  
+(om::defmethod! set-classpv? ((vars t) (pc-set symbol))  
   :initvals '((nil) 'om::|3-11B|) 
 :indoc '("list of screamer variables => midics" "fn or integers") 
   :doc "Constraint a list of Screamer variables <integers-between 0 11> to be all members of the selected pc-set <list of integers>."
@@ -336,6 +337,9 @@ Optional arguments:
  <FORBID> list of set classes in Forte notation."
     :icon 487
 (subv? vars pc-set card-min card-max (om-symb->om? forbid)))   
+
+;===============================================
+;;;===> SCS
 
 (om::defmethod! SC-subsets ((fn symbol) &optional (card-min nil) (card-max nil))
   :initvals '('om::|6-27A| nil nil)
