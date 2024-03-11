@@ -260,7 +260,7 @@ Output : t if the list is growing
 " 
   :icon 486 
   (croissante l))
-
+	
 ;(setf *screamer-package* (omNG-protect-object (omNG-make-new-package "Backtrack")))
 
 ;(AddPackage2Pack *screamer-package* *constraint-package*)

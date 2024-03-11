@@ -7,10 +7,15 @@
  (let* ((boxes (boxes self))
 	    (screamerboxes (find-class-boxes boxes 'screamerboxes))
 		(boxcalls (find-class-boxes boxes 'omboxcall))
+		(lispfuns (find-class-boxes boxes 'omboxlispcall))
 		(symbols  (loop for x in (remove nil (flat (mapcar (lambda (x) (gen-code x 0)) boxcalls))) 
 		                                if (symbolp x) collect x))
 		(apply-cont?  (remove-if-not (lambda (x) (equal x 'apply-cont)) symbols)))
-  (if (or screamerboxes apply-cont?) t nil)))
+  (if (or screamerboxes apply-cont? (some #'non-deter-lispfun? lispfuns)) t nil)))
+  
+(defun non-deter-lispfun? (omlispfun)
+ (let ((record (screamer::get-function-record (car (gen-code omlispfun 0)))))
+ (not (screamer::function-record-deterministic? record))))
 
 (defmethod om-draw-contents :after ((self patch-icon-box))
   (when (non-deter-patch? (reference (object (om-view-container self))))
