@@ -29,15 +29,8 @@ Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
   
 * CLOSER-MOP by Pascal Costanza 
   Copyright (c) 2005 - 2016 Pascal Costanza
-	  
-* ITERATE by Jonathan Amsterdam
-  Adapted to ANSI Common Lisp in 2003 by Andreas Fuchs
-  Copyright 1989, Jonathan Amsterdam.
 
 * Code excerpts from t2l-screamer by Killian Sprotte
-
-* Retract (extension to Screamer) by Buddy Kresge 
-
 
 ORIGINAL OM-BACKTRACK TUTORIAL PAGE (BY CHARLOTTE TRUCHET): http://recherche.ircam.fr/equipes/repmus/OpenMusic/user-doc/DocFiles/backtrackTutorial/ .
 
