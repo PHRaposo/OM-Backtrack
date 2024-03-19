@@ -59,8 +59,10 @@
 			             (om::om-relative-path '("sources") "om-methods")						 
 			             (om::om-relative-path '("sources") "om-screamerfuns")
                          (om::om-relative-path '("sources" "pc-set-theory") "SCs-data")
+                         (om::om-relative-path '("sources" "pc-set-theory") "normal-order-data") 						 
                          (om::om-relative-path '("sources" "pc-set-theory") "all-SCs")
-                         (om::om-relative-path '("sources" "pc-set-theory") "pc-set-theory")  						 	 
+                         (om::om-relative-path '("sources" "pc-set-theory") "pc-set-theory") 
+                         (om::om-relative-path '("sources" "pc-set-theory") "normal-order") 							  						 	 
 			             (om::om-relative-path '("sources") "screamer-solver")
 			             (om::om-relative-path '("sources") "screamer-score")					 
 			             (om::om-relative-path '("sources") "constraint-utils")							 
@@ -80,8 +82,8 @@
 	                                   list-of-chords-in alldiff? growing?) Nil)
 									   
 				 ("Pc-set-theory" 
-				   (("SCs" nil nil (om?::SC-name om?::SC+off om?::SCs-card om?::SC-info om?::sub/supersets om?::SC-subsets) nil)
-				    ("constraints" nil nil (om?::set-classpv? om?::sub-setpv? om?::member-of-scv?) nil)
+				   (("SCs" nil nil (om?::SC-name om?::SC+off om?::SCs-card om?::SC-info om?::sub/supersets om?::SC-subsets om?::normal-order) nil)
+				    ("constraints" nil nil (om?::set-classpv? om?::sub-setpv? om?::member-of-scv? om?::normal-orderv) nil)
 				   ) Nil Nil Nil)				   
  		       ("SCS"
  		          (("solver" nil nil (screamer-solver force-function screamer-doc) nil)
