@@ -39,6 +39,18 @@
 (in-package :om)
 
 ;--------------------------------------------------
+; Global variable definiton
+;--------------------------------------------------
+
+(defvar *p-variables* nil)
+
+(defvar *pitch-input* nil)
+(setf *pitch-input* "midic")
+
+(defvar *screamer-score-context* nil)
+(setf *screamer-score-context* nil) ;must be globally nil
+
+;--------------------------------------------------
 ;Variable definiton with files to load 
 ;--------------------------------------------------
 
@@ -65,7 +77,8 @@
                          (om::om-relative-path '("sources" "pc-set-theory") "normal-order") 							  						 	 
 			             (om::om-relative-path '("sources") "screamer-solver")
 			             (om::om-relative-path '("sources") "screamer-score")					 
-			             (om::om-relative-path '("sources") "constraint-utils")							 
+			             (om::om-relative-path '("sources") "constraint-utils")
+			             ;(om::om-relative-path '("sources") "analysis-tools")								 
                           ))
 						 
 ;--------------------------------------------------
@@ -78,7 +91,7 @@
 ;--------------------------------------------------
 
 
-(fill-library '( ("Backtrack" Nil Nil (an-integer-between a-member-of apply-cont list-of-members-of list-of-integers-between a-chord-in 
+(fill-library '( ("Backtrack" Nil Nil (an-integer-between a-member-of a-random-member-of apply-cont list-of-members-of list-of-random-members-of list-of-integers-between a-chord-in 
 	                                   list-of-chords-in alldiff? growing?) Nil)
 									   
 				 ("Pc-set-theory" 
@@ -101,7 +114,7 @@
 									   constraint-chord-setclass quadratic-bezier cubic-bezier) nil)				   
 	   			     ) Nil Nil Nil)									   
 		       ("Screamer"
-		           (("primitives" nil nil (s::an-integer-between s::a-member-of s::fail) nil)
+		           (("primitives" nil nil (s::an-integer-between s::a-member-of s::a-random-member-of s::fail) nil)
 				    ("variables" nil nil (s::a-member-ofv s::an-integerv s::an-integer-abovev s::an-integer-belowv s::an-integer-betweenv
 										  s::a-realv s::a-real-abovev s::a-real-belowv s::a-real-betweenv s::a-numberv s::a-booleanv s::make-variable) nil)
 				    ("assert!" nil nil (s::assert! s::assert!-integerpv s::assert!-notv-integerpv s::assert!-realpv s::assert!-notv-realpv
