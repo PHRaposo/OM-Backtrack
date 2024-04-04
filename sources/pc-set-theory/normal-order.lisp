@@ -31,19 +31,27 @@
  (gethash (sort (remove-duplicates pcs) #'<) *normal-order-hash*))
 
  (defun n-ordv (vars)
+ (s::funcallgv #'gethash (?::make-mcsetv vars) *normal-order-hash*))
+ 
+ #|
  (let ((normal-orderv (s::funcallgv #'gethash (?::make-mcsetv vars) *normal-order-hash*))
        (old-p-variables om::*p-variables*)
  	  )
   (setf om::*p-variables* (om::x-append old-p-variables (list vars) normal-orderv))
   normal-orderv))
-
+  |#
+  
  (defun n-ordv-pcs (vars)
+ (s::funcallgv #'gethash (?::make-setv vars) *normal-order-hash*))
+ 
+ #|
  (let ((normal-orderv (s::funcallgv #'gethash (?::make-setv vars) *normal-order-hash*))
        (old-p-variables om::*p-variables*)
  	  )
   (setf om::*p-variables* (om::x-append old-p-variables (list vars) normal-orderv))
   normal-orderv))
-
+ |#
+ 
 ;===============================================
 
 (om::defmethod! normal-order ((input list) (mode string))  
