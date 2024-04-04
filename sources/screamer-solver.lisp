@@ -122,6 +122,7 @@
           (cost-function (if (= ordering 1) ;==>  REORDER COST-FUNCTION 
                              (cond ((equal "domain-size" (second ordering-force)) 0)
  	                           ((equal "range-size" (second ordering-force)) 1)
+ 	                           ((equal "score-position" (second ordering-force)) 2)
  	                           (t 0)) nil))
           (terminate? (if (= ordering 1) ;==> REORDER TERMINATE? 
 		          (cond ((equal "(declare (ignore x))" (third ordering-force)) 0)
@@ -198,6 +199,7 @@
 	      (s::reorder ,(case cost-function
 	                            (0 `#'s::domain-size)
 	                            (1 `#'s::range-size)
+	                            (2 `#'s::score-position)
 								)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
@@ -216,6 +218,7 @@
 	      (s::reorder ,(case cost-function
 	                            (0 `#'s::domain-size)
 	                            (1 `#'s::range-size)
+	                            (2 `#'s::score-position)
 								)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
@@ -234,7 +237,8 @@
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
 	                                (1 `#'s::range-size)
-									)
+	                               (2 `#'s::score-position)
+					)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -253,7 +257,8 @@
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
 	                                (1 `#'s::range-size)
-									)
+	                                (2 `#'s::score-position)
+					)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -272,7 +277,8 @@
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
 	                                (1 `#'s::range-size)
-									)
+	                                (2 `#'s::score-position)
+					)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -289,7 +295,8 @@
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
 	                                (1 `#'s::range-size)
-									)
+	                                (2 `#'s::score-position)
+					)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -452,7 +459,7 @@
 
   :initvals '("static-ordering linear-force" "domain-size" "(declare (ignore x))" ">" "linear-force")
 
-  :indoc '("ordering-force-functions" "domain-size or range-size" "terminate-function" "> or <" "linear-force, divide-and-conquer-force or random-force")
+  :indoc '("ordering-force-functions" "domain-size, range-size or score-position" "terminate-function" "> or <" "linear-force, divide-and-conquer-force or random-force")
 
   :doc "Screamer ordering and force-functions" 
 
@@ -462,7 +469,9 @@
                         ("reorder" "reorder" )))
 
                    (1 (("domain-size" "domain-size") 
-                        ("range-size" "range-size") ))
+                        ("range-size" "range-size")
+                        ("score-position" "score-position")
+                        ))
 
                    (2 (("(declare (ignore x))"  "(declare (ignore x))" ) 
                         ("(< x 1e-6)"  "(< x 1e-6)" ) ))
