@@ -3,18 +3,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SCREAMER-SOLVER
 
-(defmethod! screamer-solver ((variables t) 
-                                                  (p-variables t) 
-                                                  (constraints t) 
-                                                  (p-constraints t) 
-                                                  (screamer-valuation t) 
-                                                  (force-function t)
-                                                  &optional (output nil) count-failures? objective-form form2) 
+(defmethod! screamer-solver ((variables t)
+                                                &key (p-variables nil) 
+                                                         (constraints nil) 
+                                                         (p-constraints nil)
+						         (constraints-all nil) 
+                                                         (screamer-valuation "one-value") 
+                                                         (force-function "static-ordering linear-force")
+                                                         (output nil) (count-failures? nil) (objective-form nil) (form2 nil)) 
 													  
-    :initvals '(nil nil nil nil "one-value" "static-ordering linear-force" nil nil nil nil)
+    :initvals '(nil nil nil nil nil "one-value" "static-ordering linear-force" nil nil nil nil)
 
     :indoc '("variable or list" "propagation-variables<lambda-patch>" "constraint<lambda-patch> or list" 
-		"propagation-constraints<lambda-patch>" "one-value, all-values, listener, n-values, ith-value or best-value" 
+		"propagation-constraints<lambda-patch>" "constraints-all<lambda-patch>"  "one-value, all-values, listener, n-values, ith-value or best-value" 
                 "ordering-force-functions" "symbol or list" "symbol t or nil" "<lambda-patch>"  "<lambda-patch>") 
 
     :doc "Screamer Constraint Solver
@@ -22,6 +23,7 @@
   <P-VARIABLES> lambda patch or list of lambda patches. Generates a new-list of variables.
   <CONSTRAINTS> lambda patch or list of lambda patches => constraint to variables.
   <P-CONSTRAINTS> lambda patch or list of lambda patches => constraints to propagation variables.
+  <CONSTRAINTS-ALL> lambda patch or list of lambda patches with two inputs (vars / p-vars) => constraints to all variables.  
   <SCREAMER-VALUATION> menuin with four options (one-value, all-values, listener, n-values or ith-value).
   <FORCE-FUNCTION> a string or should be connected to force-function.  
   <OUTPUT> symbol :all or nil or list with symbols and positions. Ex.: (nil :all) or ((0 2) (1 3)). 
@@ -29,15 +31,16 @@
  <COUNT-FAILURES?> symbol t or nil.
  <OBJECTIVE-FORM>and<FORM2>: lambda patches with two inputs (vars / p-vars) -> best-value forms (experimental)." 
 
-    :menuins '((4 (("one-value" "one-value") ("all-values" "all-values") 
+    :menuins '((5 (("one-value" "one-value") ("all-values" "all-values") 
                            ("listener" "listener") ("n-values" '("n-values" 10)) ("ith-value" '("ith-value" 10)) ("best-value" "best-value") )) 
-                     (7 (("nil" nil) ("t" t))) )                        
+                     (8 (("nil" nil) ("t" t))) )                        
     :icon 487 
 
  (screamer-solution variables 
                                p-variables 
                                constraints 
-                               p-constraints 
+                               p-constraints
+			       constraints-all 
                                screamer-valuation 
                                force-function 
                                output 
@@ -48,7 +51,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SCREAMER-SOLUTION
 
-(defun screamer-solution (vars p-vars cs p-cs valuation ordering-force out count-fail? obj-form form2)
+(defun screamer-solution (vars p-vars cs p-cs cs-all valuation ordering-force out count-fail? obj-form form2)
    (let* ((pref-valuation *screamer-valuation*)   
           (compiled-p-vars ;==> PROPAGATION VARIABLES
            (if (functionp p-vars) 
@@ -62,7 +65,12 @@
            (if p-cs 
               (if (functionp p-cs) 
                (fdefinition (compile-screamer-constraint p-cs))
-               (mapcar #'(lambda (x) (fdefinition (compile-screamer-constraint x))) p-cs))))			   
+               (mapcar #'(lambda (x) (fdefinition (compile-screamer-constraint x))) p-cs))))	
+           (compiled-constraints-all ;==> COMPILED CONSTRAINTS ALL VARIABLES
+            (if cs-all 
+               (if (functionp cs-all) 
+                (fdefinition (compile-screamer-constraint cs-all))
+                (mapcar #'(lambda (x) (fdefinition (compile-screamer-constraint x))) cs-all))))		   
          (compiled-forms ;==> BEST-VALUE FORMS
 		 (if obj-form
 		     (if form2 
@@ -82,7 +90,13 @@
 	         (if (functionp compiled-p-constraints) 
 	          `(apply ',compiled-p-constraints (list ,p-vars-name))
 	          `(mapcar #'(lambda (cs) (apply cs (list ,p-vars-name))) ',compiled-p-constraints))
-	        nil ))			
+	        nil ))
+	    (constraints-all ;==> CONSTRAINTS-ALL CODE
+	      (if compiled-constraints-all
+	         (if (functionp compiled-constraints-all) 
+	          `(apply ',compiled-constraints-all (list ,vars-name ,p-vars-name))
+	          `(mapcar #'(lambda (cs) (apply cs (list ,vars-name ,p-vars-name))) ',compiled-constraints-all))
+	        nil ))				
 	    (val (cond ((equal valuation "one-value") 0) 
 	                 ((equal valuation "all-values") 1)
 	                 ((equal valuation "listener") 2)
@@ -108,7 +122,7 @@
           (cost-function (if (= ordering 1) ;==>  REORDER COST-FUNCTION 
                              (cond ((equal "domain-size" (second ordering-force)) 0)
  	                           ((equal "range-size" (second ordering-force)) 1)
-                                   (t 0)) nil))
+ 	                           (t 0)) nil))
           (terminate? (if (= ordering 1) ;==> REORDER TERMINATE? 
 		          (cond ((equal "(declare (ignore x))" (third ordering-force)) 0)
                                 ((equal "(< x 1e-6)" (third ordering-force)) 1)
@@ -136,41 +150,41 @@
 	      (s::static-ordering ,(case force-function 
 	                                     (0 `#'s::linear-force)
 	                                     (1 `#'s::divide-and-conquer-force)
-                                             (2 `#'om?::random-force)))))))
+                                             (2 `#'s::random-force)))))))
 	      (1 `(s::all-values
 	             (select-solution ',out
 	              (s::solution (list ,vars-name ,p-vars-name)
 	               (s::static-ordering ,(case force-function 
 	                                             (0 `#'s::linear-force)
 	                                             (1 `#'s::divide-and-conquer-force)
-                                                     (2 `#'om?::random-force)))))))
+                                                     (2 `#'s::random-force)))))))
 	      (2  `(s::print-values
 	              (select-solution ',out
 	               (s::solution (list ,vars-name ,p-vars-name)
 	                (s::static-ordering ,(case force-function 
 	                                              (0 `#'s::linear-force)
 	                                              (1 `#'s::divide-and-conquer-force)
-                                                      (2 `#'om?::random-force)))))))
-	      (3  `(om?::n-values ,(second valuation)
+                                                      (2 `#'s::random-force)))))))
+	      (3  `(s::n-values ,(second valuation)
 	              (select-solution ',out
 	               (s::solution (list ,vars-name ,p-vars-name)
 	                (s::static-ordering ,(case force-function 
 	                                              (0 `#'s::linear-force)
 	                                              (1 `#'s::divide-and-conquer-force)
-                                                      (2 `#'om?::random-force)))))))																  
+                                                      (2 `#'s::random-force)))))))																  
 	      (4  `(s::ith-value ,(second valuation)
 	              (select-solution ',out
 	               (s::solution (list ,vars-name ,p-vars-name)
 	                (s::static-ordering ,(case force-function 
 	                                              (0 `#'s::linear-force)
 	                                              (1 `#'s::divide-and-conquer-force)
-                                                      (2 `#'om?::random-force)))))))
+                                                      (2 `#'s::random-force)))))))
 	      (5  `(s::best-value
 	            (s::solution (list ,vars-name ,p-vars-name)
 	             (s::static-ordering ,(case force-function 
 	                                   (0 `#'s::linear-force)
 	                                   (1 `#'s::divide-and-conquer-force)
-                                           (2 `#'om?::random-force))))
+                                           (2 `#'s::random-force))))
 			   ,(cond ((not (null form2)) 
 	  			      `(apply ',(first compiled-forms) (list ,vars-name ,p-vars-name)) 
 	                  `(apply ',(second compiled-forms) (list ,vars-name ,p-vars-name)))
@@ -183,7 +197,8 @@
 	       (s::solution (list ,vars-name ,p-vars-name)
 	      (s::reorder ,(case cost-function
 	                            (0 `#'s::domain-size)
-	                            (1 `#'s::range-size))
+	                            (1 `#'s::range-size)
+								)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -194,13 +209,14 @@
 	                       ,(case reorder-force
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'om?::random-force)))))))
+                                    (2 `#'s::random-force)))))))
 	      (1 `(s::all-values 
 	           (select-solution ',out                           
 	            (s::solution (list ,vars-name ,p-vars-name)
 	      (s::reorder ,(case cost-function
 	                            (0 `#'s::domain-size)
-	                            (1 `#'s::range-size))
+	                            (1 `#'s::range-size)
+								)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -211,13 +227,14 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'om?::random-force)))))))
+                                    (2 `#'s::random-force)))))))
 	      (2  `(s::print-values 
 	             (select-solution ',out
 	             (s::solution (list ,vars-name ,p-vars-name)
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
-	                                (1 `#'s::range-size))
+	                                (1 `#'s::range-size)
+									)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -228,14 +245,15 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'om?::random-force)))))))
+                                    (2 `#'s::random-force)))))))
 
-	      (3  `(om?::n-values ,(second valuation)
+	      (3  `(s::n-values ,(second valuation)
 	              (select-solution ',out
 	               (s::solution (list ,vars-name ,p-vars-name)
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
-	                                (1 `#'s::range-size))
+	                                (1 `#'s::range-size)
+									)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -246,14 +264,15 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'om?::random-force)))))))
+                                    (2 `#'s::random-force)))))))
 
 	      (4  `(s::ith-value ,(second valuation)
 	              (select-solution ',out
 	               (s::solution (list ,vars-name ,p-vars-name)
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
-	                                (1 `#'s::range-size))
+	                                (1 `#'s::range-size)
+									)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -264,12 +283,13 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'om?::random-force)))))))
+                                    (2 `#'s::random-force)))))))
 	      (5  `(s::best-value
 	            (s::solution (list ,vars-name ,p-vars-name)
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
-	                                (1 `#'s::range-size))
+	                                (1 `#'s::range-size)
+									)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -280,7 +300,7 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'om?::random-force))))
+                                    (2 `#'s::random-force))))
 			   ,(cond ((not (null form2)) 
 	  			      `(apply ',(first compiled-forms) (list ,vars-name ,p-vars-name)) 
 	                             `(apply ',(second compiled-forms) (list ,vars-name ,p-vars-name)))
@@ -297,7 +317,9 @@
 	         ,constraints 
 
 	         ,p-constraints
-
+			 
+		 ,constraints-all
+			 
 	         ,solution-code))
 
 	   `(let* ((,vars-name ,(reclist-vars vars));===> COUNT FAILURES OFF
@@ -308,8 +330,10 @@
 	         ,constraints 
 
 	         ,p-constraints
+			 
+		 ,constraints-all			 
 
-	          ,solution-code)))
+	         ,solution-code)))
 		)
 
  (case val 
@@ -421,16 +445,16 @@
 ;;; FORCE-FUNCTION
 
 (defmethod! force-function ((force-function string) 
-                                             &optional (cost-function "domain-size") 
+                                             &key (cost-function "domain-size") 
                                                              (terminate? "(declare (ignore x))")
                                                              (order ">" )
-                                                             (reorder-force-function"linear-force"))
+                                                             (reorder-force-function "linear-force"))
 
   :initvals '("static-ordering linear-force" "domain-size" "(declare (ignore x))" ">" "linear-force")
 
-  :indoc '("ordering-force-functions" "domain-size or range-size" "terminate-function" "> or <" "linear-force or divide-and-conquer-force")
+  :indoc '("ordering-force-functions" "domain-size or range-size" "terminate-function" "> or <" "linear-force, divide-and-conquer-force or random-force")
 
-  :doc "Screamer Ordering and Force-Functions" 
+  :doc "Screamer ordering and force-functions" 
 
   :menuins '((0 (("static-ordering linear-force" "static-ordering linear-force") 
                         ("static-ordering divide-and-conquer-force" "static-ordering divide-and-conquer-force") 
@@ -438,7 +462,7 @@
                         ("reorder" "reorder" )))
 
                    (1 (("domain-size" "domain-size") 
-                        ("range-size" "range-size")))
+                        ("range-size" "range-size") ))
 
                    (2 (("(declare (ignore x))"  "(declare (ignore x))" ) 
                         ("(< x 1e-6)"  "(< x 1e-6)" ) ))
@@ -450,7 +474,7 @@
                         ("divide-and-conquer-force" "divide-and-conquer-force")
                         ("random-force" "random-force")))
                    )
-  :icon 487 
+  :icon 487  
 (if (or (equal force-function "static-ordering linear-force")
         (equal force-function "static-ordering divide-and-conquer-force")
         (equal force-function "static-ordering random-force"))
