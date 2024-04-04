@@ -1,3 +1,70 @@
+;;;;;;;;;;;;;;;;;;;;;;;
+; OM-SCREAMER FUNCTIONS
+
+(in-package :om-screamer)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; CONSTRAINTS FOR PITCHES - ONE MELODIC LINE (ASSERT! IS NOT NEEDED)
+;;; (FOR SCREAMER SOLVER - DEPRECATED) - NEED TO CHECK IF STILL NEEDED
+
+(defun all-ascendingv (var-list)
+ (assert!-apply-rec #'(lambda (x y) (all-asc x y)) var-list)) 
+
+(defun all-asc (var1 var2)
+ (>v (-v var2 var1) 0))
+	  
+(defun all-descendingv (var-list)
+ (assert!-apply-rec #'(lambda (x y) (all-desc x y)) var-list)) 
+
+(defun all-desc (var1 var2)
+ (<v (-v var2 var1) 0))
+
+(defun allowed-melodic-intervals (var-list int-list)
+ (assert!-apply-rec #'(lambda (x y) (al-mel-ints x y int-list)) var-list)) 
+
+(defun al-mel-ints (var1 var2 list)
+ (memberv (absv (-v var2 var1)) list))
+
+(defun not-allowed-melodic-intervals (var-list int-list)
+ (assert!-apply-rec #'(lambda (x y) (not-al-mel-ints x y int-list)) var-list)) 
+
+(defun not-al-mel-ints (var1 var2 list)
+ (notv (memberv (absv (-v var2 var1)) list)))
+
+(defun no-repeated-melodic-intervals (var-list)
+ (assert!-apply-rec #'(lambda (x y z) (no-repeat-mel-ints x y z)) var-list)) 
+
+(defun no-repeat-mel-ints (var1 var2 var3)
+ (/=v (-v var2 var1) (-v var3 var2)))
+
+(defun ballistic? (var-list) ;;;
+" < From PW-CONSTRAINTS by Mikael Laurson >
+A ballistic movement allows two jumps in the same direction, 
+but the larger jump has to be below the smaller one."
+ (assert!-apply-rec #'(lambda (x y z) (blstc? x y z)) var-list)) 
+
+(defun blstc? (midi1 midi2 midi3) 
+" midi1, midi2 and midi3 should form a 'ballistic' melodic movement.
+A ballistic movement allows two jumps in the same direction, 
+but the larger jump has to be below the smaller one."
+  (let* ((up (<v midi1 midi2 midi3))
+         (down (>v midi1 midi2 midi3))
+         (mel-diff1 (absv (-v midi1 midi2)))
+         (mel-diff2 (absv (-v midi2 midi3)))
+         (jump-case? (orv (>v mel-diff1 2) (>v mel-diff2 2)))
+         (same-direction? (orv up down)))
+    (ifv (and jump-case? same-direction?)
+       (ifv up 
+           (>=v  mel-diff1 mel-diff2)
+           (<=v  mel-diff1 mel-diff2))
+        t)))
+
+(defun symm? (var-list)
+ (let ((int-mod12v (om::mod12v (x->dxv var-list))))
+(assert! (equalv int-mod12v (reverse int-mod12v)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (in-package :om)
 
 (defmethod! contain-variables? ((domain-list list))		  
@@ -234,10 +301,11 @@ Returns a list of screamer-score-constraint objects."
                               for onset-pair in onset-pairs
                               collect (eval `#'(lambda (x)
                                                       (let ((onset (second x)))
+                                                        (when (first x)
                                                        (if (and (>= onset ,(first onset-pair))
                                                                    (< onset ,(second onset-pair)))
                                                             (if (equal ,mode "midics")
                                                                 (s::assert! (s::memberv (first x) ,(reclist-vars chord)))
-                                                                (s::assert! (s::memberv (mc->pcv (first x))  ,(reclist-vars (remove-duplicates (mc->pcv chord)))))))))))))
+                                                                (s::assert! (s::memberv (mc->pcv (first x))  ,(reclist-vars (remove-duplicates (mc->pcv chord))))))))))))))
     (loop for cs in constraints
              collect (constraint-one-voice cs "n-inputs" voices "pitch+onset"))))
