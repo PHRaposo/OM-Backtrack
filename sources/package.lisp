@@ -30,7 +30,7 @@
 (om::defmethod* domain-parameters ((self score-domain))
  (get-domain-parameters self))
 
- (defvar *p-variables* nil)
- (declare (special *p-variables*))
+ ;(defvar *p-variables* nil)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
