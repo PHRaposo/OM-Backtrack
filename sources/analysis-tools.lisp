@@ -18,7 +18,7 @@
 (defmethod compute-analysis-segments ((self interval-analysis) (object t)) 
   (if (or (not (analysis-segments self))
           (om-y-or-n-dialog "This operation will delete the current segmentation. Continue?"))
-      (loop ;for c in (get-real-chords object)
+      (loop for c in (get-real-chords object)
             for i = 0 then (+ i 1) collect
             (make-instance 'chord-segment
                        :chord-ids (list i)
@@ -26,7 +26,7 @@
                        ))
     ))
 
-(defclass! int-a ()
+(defclass! int-a (ryth-coerce)
    ((puntos :initform '(3 4) :accessor puntos :initarg :puntos))
    (:icon 421))
  
@@ -75,7 +75,7 @@
 (defmethod compute-analysis-segments ((self setclass-analysis) (object t)) 
   (if (or (not (analysis-segments self))
           (om-y-or-n-dialog "This operation will delete the current segmentation. Continue?"))
-      (loop ;for c in (get-real-chords object)
+      (loop for c in (get-real-chords object)
             for i = 0 then (+ i 1) collect
             (make-instance 'chord-segment
                        :chord-ids (list i)
@@ -83,7 +83,7 @@
                        ))
     ))
 
-(defclass! setclass-a ()
+(defclass! setclass-a (ryth-coerce)
    ((puntos :initform '(3-11A 3-11B) :accessor puntos :initarg :puntos))
    (:icon 421))
  
