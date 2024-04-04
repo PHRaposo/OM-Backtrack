@@ -66,7 +66,7 @@
 			             (om::om-relative-path '("sources") "screamer-solver")
 			             (om::om-relative-path '("sources") "screamer-score")					 
 			             (om::om-relative-path '("sources") "constraint-utils")	
-			             (om::om-relative-path '("sources") "analysis-tools")		 							 
+			             ;(om::om-relative-path '("sources") "analysis-tools") NOT WORKING ON WINDOWS	 							 
                           ))
 						 
 ;--------------------------------------------------
