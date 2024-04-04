@@ -61,23 +61,29 @@
 ; =============================================================== ;
 
 (defun fnv (vars)
+(firstv (s::funcallgv #'gethash (?::make-mcsetv vars) *all-possible-chroma-subsets-hash*)))
+
+#|
 (let ((forte-nv (firstv (s::funcallgv #'gethash (?::make-mcsetv vars) *all-possible-chroma-subsets-hash*)))
       (old-p-variables om::*p-variables*)
 	  )
  (setf om::*p-variables* (om::x-append old-p-variables (list vars) forte-nv))
  forte-nv))
- ;(firstv (s::funcallgv #'gethash (?::make-mcsetv vars) *all-possible-chroma-subsets-hash*)))
+|#
 
 (defun member-of-setclassv (vars list)
  (memberv (fnv vars) list))
 
 (defun fnv-pcs (vars)
+(firstv (s::funcallgv #'gethash (?::make-setv vars) *all-possible-chroma-subsets-hash*)))
+
+#|
 (let ((forte-nv (firstv (s::funcallgv #'gethash (?::make-setv vars) *all-possible-chroma-subsets-hash*)))
       (old-p-variables om::*p-variables*)
 	  )
  (setf om::*p-variables* (om::x-append old-p-variables (list vars) forte-nv))
  forte-nv))
-;(firstv (s::funcallgv #'gethash (?::make-setv vars) *all-possible-chroma-subsets-hash*)))
+|#
 
 (defun member-of-setclassv-pcs (vars list)
  (memberv (fnv-pcs vars) list))
