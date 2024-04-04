@@ -110,11 +110,13 @@
            #:static-ordering
            #:domain-size
            #:range-size
+		   #:score-order
            #:reorder
            #:solution
            #:best-value
            #:template
            #:define-screamer-package
+		   #:*all-screamer-score-variables*
            #:*screamer-version*
            #:*dynamic-extent?*
            #:*iscream?*

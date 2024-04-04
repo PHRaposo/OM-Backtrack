@@ -105,8 +105,12 @@ disable it. Default is platform dependent.")
 
 (defvar *screamer-results* nil
   "A global variable storing the results of the nearest enclosing `-VALUES' or `-VALUES-PROB' form.
-Can be used for finer-grained control of nondeterminism.")
+Can be used for finer-grained control of nondeterminism.") ;<== from swapneils 
 
+(defvar *all-screamer-score-variables* nil
+    "A global variable storing the order which variables (and non-variables) will appear in the musical score representation 
+ of screamer-score (Openmusic). This is used for score-order (new cost-function).") ;<== phraposo
+  
 (defvar-compile-time *function-record-table* (make-hash-table :test #'equal)
   "The function record table.")
 
@@ -3155,6 +3159,9 @@ either a list or a vector."
              (funcall continuation (aref sequence n))))))
       (t (error "SEQUENCE must be a sequence")))))
 
+;;; note: The following random functions was included for Openmusic (phraposo)
+;;; for experimental purposes on music constraints.
+
 (cl:defun permut-random (input) 
 "Returns a random permutation of input."
  (labels
@@ -4332,7 +4339,7 @@ Otherwise returns the value of X."
   ;;       type system could distinguish Gaussian integers from other complex
   ;;       numbers we could make such an assertion whenever either X or Y was
   ;;       not a Gaussian integer.
-  (if (and (variable-integer? z) (or (variable-integer? x) (variable-integer? y)))
+  (if (and (variable-integer? z) (or (variable-integer? x) (variable-integer? y))) ;<== from swapneils 
       (restrict-integer! x))
   ;; note: Ditto.
   (if (and (variable-real? z) (or (variable-real? x) (variable-real? y)))
@@ -4420,7 +4427,7 @@ Otherwise returns the value of X."
   ;;       X or Y is real. If the Screamer type system could distinguish
   ;;       Gaussian integers from other complex numbers we could whenever X or
   ;;       Y was not a Gaussian integer.
-  (if (and (or (variable-noninteger? x) (variable-noninteger? y))
+  (if (and (or (variable-noninteger? x) (variable-noninteger? y)) ;<== from swapneils 
            (or (variable-real? x) (variable-real? y)))
       (restrict-noninteger! z))
   (if (and (variable-real? x) (variable-real? y)) (restrict-real! z))
@@ -7140,7 +7147,10 @@ domain size is odd, the halves differ in size by at most one."
                   variable that has a countable domain or a finite range")))))
   (value-of variable))
 
-(defun random-force (x) ;<== experimental (phraposo)
+;;; note: random-force was included for Openmusic (phraposo)
+;;;
+
+(defun random-force (x)
 "Returns X if it is not a variable. If X is a bound variable then returns
 its value.
 
@@ -7240,6 +7250,11 @@ Other types of objects and variables have range size NIL."
                      (variable-upper-bound x)
                      (- (variable-upper-bound x) (variable-lower-bound x))))
       (otherwise nil))))
+
+(defun score-position (x) 
+  "Returns the position of X in the musical score representation of screamer-score (Openmusic).
+  X can be a variable or non-variable."
+ (position x *all-screamer-score-variables*))
 
 (defun corrupted? (variable)
   (let* ((lower-bound (variable-lower-bound variable))
