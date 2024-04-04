@@ -39,6 +39,7 @@
            #:necessarily?
            #:all-values
            #:ith-value
+		   #:n-values 
            #:print-values
            #:nondeterministic-function?
            #:funcall-nondeterministic
@@ -54,6 +55,7 @@
            #:an-integer-below
            #:an-integer-between
            #:a-member-of
+		   #:a-random-member-of		   
            #:when-failing
            #:count-failures
            #:boolean
@@ -104,6 +106,7 @@
            #:apply-substitution
            #:linear-force
            #:divide-and-conquer-force
+		   #:random-force
            #:static-ordering
            #:domain-size
            #:range-size

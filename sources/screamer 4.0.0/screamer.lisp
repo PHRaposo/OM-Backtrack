@@ -104,6 +104,10 @@ disable it. Default is platform dependent.")
 
 (defvar *trail* (make-array 4096 :adjustable t :fill-pointer 0) "The trail.")
 
+(defvar *screamer-results* nil
+  "A global variable storing the results of the nearest enclosing `-VALUES' or `-VALUES-PROB' form.
+Can be used for finer-grained control of nondeterminism.")
+
 (defvar-compile-time *function-record-table* (make-hash-table :test #'equal)
   "The function record table.")
 
@@ -2693,6 +2697,62 @@ I."
                             (decf ,counter))))
          ,default))))
 
+(defmacro-compile-time n-values (n form &optional (default-on-failure nil) (default nil)) ;<== from swapneils
+   "Returns the first N nondeterministic values yielded by FORM.
+
+ N must be an integer denoting the number of values to return, or a form producing such an integer.
+
+ No further execution of FORM is attempted after it successfully yields the
+ desired value.
+
+ If FORM fails before yielding the N values to be returned, then DEFAULT is evaluated and its value returned
+ instead. DEFAULT defaults to NIL if not present.
+
+ Local side effects performed by FORM are undone when N-VALUES returns, but
+ local side effects performed by DEFAULT and by N are not undone when N-VALUES
+ returns.
+
+ An N-VALUES expression can appear in both deterministic and nondeterministic
+ contexts. Irrespective of what context the N-VALUES appears in, FORM is
+ always in a nondeterministic context, while DEFAULT and N are in whatever
+ context the N-VALUES appears in.
+
+ An N-VALUES expression is nondeterministic if DEFAULT is present and is
+ nondeterministic, or if N is nondeterministic. Otherwise it is deterministic.
+
+ If DEFAULT is present and nondeterministic, and if FORM fails, then it is
+ possible to backtrack into the DEFAULT and for the N-VALUES expression to
+ nondeterministically return multiple times.
+
+ If N is nondeterministic then the N-VALUES expression operates
+ nondeterministically on each value of N. In this case, backtracking for each
+ value of FORM and DEFAULT is nested in, and restarted for, each backtrack of
+ N."
+   (when (numberp n) (assert (and (integerp n) (>= n 0))))
+   (let ((counter (gensym "I"))
+         (value (gensym "value"))
+         (value-list '*screamer-results*)
+         (last-value-cons (gensym "last-value-cons")))
+     `(block n-values
+        (let* ((,counter (value-of ,n))
+               (,value-list nil)
+               (,last-value-cons nil))
+          (declare (integer ,counter) ((or cons null) ,value-list))
+          (for-effects
+            (unless (zerop ,counter)
+              (global
+                (let ((,value ,form))
+                  (decf ,counter)
+                  ;; Add the value to the collected list
+                  (if (null ,value-list)
+                      (setf ,last-value-cons (cached-list ,value)
+                            ,value-list ,last-value-cons)
+                      (setf (rest ,last-value-cons) (cached-list ,value)
+                            ,last-value-cons (rest ,last-value-cons)))
+                  (when (zerop ,counter)
+                    (return-from n-values ,value-list))))))
+          ,(if default-on-failure default value-list)))))
+				  
 ;;; In classic Screamer TRAIL is unexported and UNWIND-TRAIL is exported. This
 ;;; doesn't seem very safe or sane: while users could conceivably want to use
 ;;; TRAIL to track unwinds, using UNWIND-TRAIL seems inherently dangerous
@@ -2924,10 +2984,13 @@ function."
   (let ((function (value-of function)))
     (if (nondeterministic-function? function)
         ;; note: I don't know how to avoid the consing here.
-        (apply (nondeterministic-function-function function)
-               continuation
-               (apply #'list* (cons argument arguments)))
-        (funcall continuation (apply function argument arguments)))))
+	    (apply #'apply (nondeterministic-function-function function) ;<== from swapneils
+	               continuation argument arguments)
+	        (funcall continuation (apply #'apply function argument arguments)))))
+        ;(apply (nondeterministic-function-function function)
+        ;       continuation
+        ;       (apply #'list* (cons argument arguments)))
+        ;(funcall continuation (apply function argument arguments)))))
 
 (cl:defun multiple-value-call-nondeterministic (function-form &rest values-forms)
   "Analogous to the CL:MULTIPLE-VALUE-CALL, except FUNCTION-FORM can evaluate
@@ -3092,6 +3155,56 @@ either a list or a vector."
                 (choice-point-internal (funcall continuation (aref sequence i)))))
              (funcall continuation (aref sequence n))))))
       (t (error "SEQUENCE must be a sequence")))))
+
+(cl:defun permut-random (input) 
+"Returns a random permutation of input."
+ (labels
+  ((takeout (i list)
+    (cond ((= i 0) (subseq list 1 (length list)))
+          ((= i (1- (length list))) (butlast list))
+          (t (append
+              (subseq list 0 i)
+              (subseq list (1+ i) (length list)))))))
+ (let ((list (copy-seq input))
+      (r nil))
+   (loop for i from 0 while (< i (length input)) do
+        (unless (= 0 (length list))
+          (let ((j (random (length list))))
+            (push (elt list j) r)
+            (setf list (takeout j list)))))
+   r)))
+
+
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (screamer::declare-nondeterministic 'a-random-member-of))
+
+(cl:defun a-random-member-of (sequence)
+  "Nondeterministically returns an random element of SEQUENCE. The SEQUENCE must be
+either a list or a vector."
+  (declare (ignore sequence))
+  (screamer::screamer-error
+   "A-RANDOM-MEMBER-OF is a nondeterministic function. As such, it must be called~%~
+   only from a nondeterministic context."))
+
+(cl:defun a-random-member-of-nondeterministic (continuation sequence)
+(let ((sequence (permut-random (value-of sequence))))
+  (cond
+    ((listp sequence)
+     (unless (null sequence)
+       (screamer::choice-point-external
+        (loop (if (null (rest sequence)) (return))
+          (screamer::choice-point-internal (funcall continuation (first sequence)))
+          (setf sequence (value-of (rest sequence)))))
+       (funcall continuation (first sequence))))
+    ((vectorp sequence)
+     (let ((n (length sequence)))
+       (unless (zerop n)
+         (let ((n (1- n)))
+           (choice-point-external
+            (dotimes (i n)
+              (choice-point-internal (funcall continuation (aref sequence i)))))
+           (funcall continuation (aref sequence n))))))
+    (t (error "SEQUENCE must be a sequence")))))
 
 ;;; note: The following two functions work only when Screamer is running under
 ;;;       ILisp/GNUEmacs with iscream.el loaded.
@@ -4216,11 +4329,11 @@ Otherwise returns the value of X."
 (defun +-rule-down (z x y)
   ;; note: We can't assert that X and Y are integers when Z is an integer since
   ;;       Z may be an integer when X and Y are Gaussian integers. But we can
-  ;;       make such an assertion if either X or Y is real. If the Screamer
+  ;;       make such an assertion if either X or Y is an integer. If the Screamer
   ;;       type system could distinguish Gaussian integers from other complex
   ;;       numbers we could make such an assertion whenever either X or Y was
   ;;       not a Gaussian integer.
-  (if (and (variable-integer? z) (or (variable-real? x) (variable-real? y)))
+  (if (and (variable-integer? z) (or (variable-integer? x) (variable-integer? y)))
       (restrict-integer! x))
   ;; note: Ditto.
   (if (and (variable-real? z) (or (variable-real? x) (variable-real? y)))
@@ -4347,11 +4460,11 @@ Otherwise returns the value of X."
 (defun *-rule-down (z x y)
   ;; note: We can't assert that X and Y are integers when Z is an integer since
   ;;       Z may be an integer when X and Y are Gaussian integers. But we can
-  ;;       make such an assertion if either X or Y is real. If the Screamer
+  ;;       make such an assertion if either X or Y an integer. If the Screamer
   ;;       type system could distinguish Gaussian integers from other complex
   ;;       numbers we could make such an assertion whenever either X or Y was
   ;;       not a Gaussian integer.
-  (if (and (variable-integer? z) (or (variable-real? x) (variable-real? y)))
+  (if (and (variable-integer? z) (or (variable-integer? x) (variable-integer? y)))
       (restrict-integer! x))
   ;; note: Ditto.
   (if (and (variable-real? z) (or (variable-real? x) (variable-real? y)))
@@ -7027,6 +7140,53 @@ domain size is odd, the halves differ in size by at most one."
           (t (error "It is only possible to divide and conquer force a~%~
                   variable that has a countable domain or a finite range")))))
   (value-of variable))
+
+(defun random-force (x) ;<== experimental (phraposo)
+"Returns X if it is not a variable. If X is a bound variable then returns
+its value.
+
+If X is an unbound variable then it must be known to have a countable set of
+potential values. In this case X is nondeterministically restricted to be
+equal to a random value in this countable set, thus forcing X to be bound.
+The dereferenced value of X is then returned.
+
+An unbound variable is known to have a countable set of potential values
+either if it is known to have a finite domain or if it is known to be integer
+valued.
+
+An error is signalled if X is not known to have a finite domain and is not
+known to be integer valued.
+
+Upon backtracking X will be bound to each potential value in turn, failing
+when there remain no untried alternatives.
+
+Since the set of potential values is required only to be countable, not
+finite, the set of untried alternatives may never be exhausted and
+backtracking need not terminate. This can happen, for instance, when X is
+known to be an integer but lacks either an upper of lower bound.
+
+The order in which the nondeterministic alternatives are tried is left
+unspecified to give future implementations leeway in incorporating heuristics
+in the process of determining a good search order."
+ (let ((variable (value-of x)))
+   (if (variable? variable)
+       (restrict-value!
+        variable
+        (cond ((not (eq (variable-enumerated-domain variable) t))
+               (a-random-member-of (variable-enumerated-domain variable)))
+              ((variable-integer? variable)
+               (if (variable-lower-bound variable)
+                   (if (variable-upper-bound variable)
+                       (an-integer-between
+                        (variable-lower-bound variable)
+                        (variable-upper-bound variable))
+                       (an-integer-above (variable-lower-bound variable)))
+                   (if (variable-upper-bound variable)
+                       (an-integer-below (variable-upper-bound variable))
+                       (an-integer))))
+              (t (error "It is only possible to random force a variable that~%~
+                       has a countable domain"))))))
+ (value-of variable))
 
 ;;; note: STATIC-ORDERING used to be here but was moved to be before
 ;;;       KNOWN?-CONSTRAINT to avoid a forward reference to a nondeterministic
