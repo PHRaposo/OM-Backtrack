@@ -29,7 +29,7 @@ Second output: Returns all screamer variables if the first output is true and ni
     :indoc '( "midics" "pcset list") 
     :doc "Returns t if a list of midics <input1> containts all the pitch-classes in pcset list <input2>."  
     :icon 487
-(all-membersv (mc->pcv domain-list) pcset))
+(all-membersv (mc->pcv (flat (remove nil domain-list))) pcset))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; HARMONIC AND MELODIC INTERVALS
@@ -43,8 +43,8 @@ Use > and < to add/remove outputs."
     :icon 487
 	:numouts 2
  (let ((intsv (if (equal mode "+/-") 
-	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (s::-v y x))) domain-list (cdr domain-list)) 
-	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (om?::absv (s::-v y x)))) domain-list (cdr domain-list))))) 
+	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (s::-v y x))) (flat domain-list) (cdr (flat domain-list))) 
+	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (om?::absv (s::-v y x)))) (flat domain-list) (cdr (flat domain-list)))))) 
   (values-list (first-n intsv (length intsv)))))
 
 (defmethod get-boxcallclass-fun ((self (eql 'harmonic-intervalsv))) 'OMBoxSplit)
@@ -58,8 +58,8 @@ Use > and < to add/remove outputs."
     :icon 487
 	:numouts 2
  (let ((intsv (if (equal mode "+/-") 
-	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (s::-v y x))) domain-list1 domain-list2) 
-	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (om?::absv (s::-v y x)))) domain-list1 domain-list2)))) 
+	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (s::-v y x))) (flat domain-list1) (flat domain-list2)) 
+	(mapcar #'(lambda (x y) (if (or (null x) (null y)) nil (om?::absv (s::-v y x)))) (flat domain-list1) (flat domain-list2))))) 
   (values-list (first-n intsv (length intsv)))))
 
 (defmethod get-boxcallclass-fun ((self (eql 'melodic-intervalsv))) 'OMBoxSplit)
@@ -116,11 +116,13 @@ Use > and < to add/remove outputs."
 				     (s::=v m2 0))))))
 
 (defun stepwise? (n1 n2)
- (s::<=v (om?::absv (s::-v n2 n1)) 200))
+(if (or (null n1) (null n2)) 
+    nil
+    (s::memberv (om?::absv (s::-v n2 n1)) '(100 200))))
 
 (defun any-step? (list1 list2)
  (s::orv (stepwise? (second list1) (second list2))
-           (stepwise? (first list1) (first list2))))
+         (stepwise? (first list1) (first list2))))
 
 (defun step-upper-voice? (list1 list2)
  (stepwise? (first list1) (first list2)))
@@ -197,3 +199,45 @@ Use > and < to add/remove outputs."
         )
       )
    (constraint-harmony constraint  "n-inputs" "voices-list" "all" voices-list)))
+
+(defmethod! chord-at-measure ((measures list) (chords list) (voices list))		  
+  :initvals '( nil nil nil)
+  :indoc '("list" "list" "list") 
+  :doc "Constraint all notes of a voice (or voices) to be members of chord at measure number. 
+
+Returns a list of screamer-score-constraint objects." 
+  :icon 487
+   (let ((constraints (loop for chord in chords collect (eval `#'(lambda (x) (s::assert! (all-membersv x ,(reclist-vars chord))))))))
+    (loop for mes in measures 
+             for cs in constraints
+   collect (constraint-measure (constraint-one-voice cs "list" voices "pitch") mes))))
+
+(defmethod! chord-at-times ((chords list) (onsets list) (voices list) &optional (mode "midics"))		  
+  :initvals '( nil nil nil "midics")
+  :indoc '("list" "list" "list" "string") 
+  :menuins '((3 (("midics" "midics") ("pcs" "pcs")))) 
+  :doc "Constraint all notes of a voice (or voices) to be members of chord at the given onset.
+
+The onsets list should be in chronologial order, e.g., a chord (6000 6400 6700) with onset 1/4 
+will constraint all notes to be members of this chord when onset is greater or equal 0 and smaller
+than 1/4. 
+
+The number of chords must be the same as the number of onsets.
+
+If the optional <mode> arguments is supplied, it can constraint notes to be members of the pitch class
+content of the given chord <pcs> or exactly the same notes of the chord <midics> - default. 
+
+Returns a list of screamer-score-constraint objects." 
+  :icon 487
+   (let* ((onset-pairs (mapcar #'list (butlast (x-append 0 onsets)) onsets))
+           (constraints (loop for chord in chords
+                              for onset-pair in onset-pairs
+                              collect (eval `#'(lambda (x)
+                                                      (let ((onset (second x)))
+                                                       (if (and (>= onset ,(first onset-pair))
+                                                                   (< onset ,(second onset-pair)))
+                                                            (if (equal ,mode "midics")
+                                                                (s::assert! (s::memberv (first x) ,(reclist-vars chord)))
+                                                                (s::assert! (s::memberv (mc->pcv (first x))  ,(reclist-vars (remove-duplicates (mc->pcv chord)))))))))))))
+    (loop for cs in constraints
+             collect (constraint-one-voice cs "n-inputs" voices "pitch+onset"))))
