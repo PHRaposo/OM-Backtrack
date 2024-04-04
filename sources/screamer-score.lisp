@@ -23,7 +23,8 @@
  (setf s::*strategy* strategy) 
 
  (setf *p-variables* nil)
-				   
+ (setf s::*all-screamer-score-variables* nil)
+ 				   
  (print "Timing evaluation of screamer-score...")
 
 (let* ((scs-time (list (get-internal-run-time) (get-internal-real-time)))
@@ -31,6 +32,17 @@
          (all-domains (build-screamer-score-domain voices domains mcs-approx random?))
          (measures-domains (build-measures-domain voices all-domains)))
 
+ (setf s::*all-screamer-score-variables* (flat (second all-domains)))
+
+ ;(mapcar #'(lambda (x) <== FOR DEBUG
+ ;    (s::attach-noticer!
+ ;     #'(lambda()
+ ;  (when (s::bound? x)
+ ;  (print (position x *all-screamer-score-variables*))
+ ;  ))
+ ;     x)
+;	 ) *all-screamer-score-variables*)
+		
     (if (screamer-score-constraint-p score-constraints)
        (apply-screamer-score-constraint (get-constraint-parameters score-constraints) all-domains measures-domains)
       
@@ -40,9 +52,11 @@
                              (apply-screamer-score-constraint (get-constraint-parameters constraint) all-domains measures-domains)))
          score-constraints))
 		 
- (let ((solution (screamer-score-solution (append (list *p-variables*) all-domains) force-function)))
-   
-  (setf *p-variables* nil) 
+ (let ((solution (screamer-score-solution (append (list *p-variables*) (list (first all-domains))) force-function)))
+  
+  (setf s::*strategy* :gfc) 
+  (setf *p-variables* nil)
+  (setf s::*all-screamer-score-variables* nil) 
   (print-scs-time scs-time)
   (test-solution solution voices) 	       
  )))
@@ -63,7 +77,8 @@
                  (cond ((null (second force-function)) #'s::domain-size)  
                            ((functionp (second force-function)) (second force-function))
                            ((equal (second force-function) "domain-size") #'s::domain-size)   
-                           ((equal (second force-function) "range-size") #'s::range-size)                     
+                           ((equal (second force-function) "range-size") #'s::range-size)
+                           ((equal (second force-function) "score-position") #'s::score-position)						                        
                            (t #'s::domain-size))
                 (cond ((null (third force-function)) #'(lambda (x) (declare (ignore x)) nil))
                           ((functionp (third force-function)) (third force-function))
