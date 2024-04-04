@@ -40,7 +40,7 @@
                                p-variables 
                                constraints 
                                p-constraints
-			       constraints-all 
+			       			   constraints-all 
                                screamer-valuation 
                                force-function 
                                output 
@@ -151,41 +151,41 @@
 	      (s::static-ordering ,(case force-function 
 	                                     (0 `#'s::linear-force)
 	                                     (1 `#'s::divide-and-conquer-force)
-                                             (2 `#'s::random-force)))))))
+                                         (2 `#'s::random-force)))))))
 	      (1 `(s::all-values
 	             (select-solution ',out
 	              (s::solution (list ,vars-name ,p-vars-name)
 	               (s::static-ordering ,(case force-function 
 	                                             (0 `#'s::linear-force)
 	                                             (1 `#'s::divide-and-conquer-force)
-                                                     (2 `#'s::random-force)))))))
+                                                 (2 `#'s::random-force)))))))
 	      (2  `(s::print-values
 	              (select-solution ',out
 	               (s::solution (list ,vars-name ,p-vars-name)
 	                (s::static-ordering ,(case force-function 
 	                                              (0 `#'s::linear-force)
 	                                              (1 `#'s::divide-and-conquer-force)
-                                                      (2 `#'s::random-force)))))))
+                                                  (2 `#'s::random-force)))))))
 	      (3  `(s::n-values ,(second valuation)
 	              (select-solution ',out
 	               (s::solution (list ,vars-name ,p-vars-name)
 	                (s::static-ordering ,(case force-function 
 	                                              (0 `#'s::linear-force)
 	                                              (1 `#'s::divide-and-conquer-force)
-                                                      (2 `#'s::random-force)))))))																  
+                                                  (2 `#'s::random-force)))))))																  
 	      (4  `(s::ith-value ,(second valuation)
 	              (select-solution ',out
 	               (s::solution (list ,vars-name ,p-vars-name)
 	                (s::static-ordering ,(case force-function 
 	                                              (0 `#'s::linear-force)
 	                                              (1 `#'s::divide-and-conquer-force)
-                                                      (2 `#'s::random-force)))))))
+                                                  (2 `#'s::random-force)))))))
 	      (5  `(s::best-value
 	            (s::solution (list ,vars-name ,p-vars-name)
 	             (s::static-ordering ,(case force-function 
 	                                   (0 `#'s::linear-force)
 	                                   (1 `#'s::divide-and-conquer-force)
-                                           (2 `#'s::random-force))))
+                                       (2 `#'s::random-force))))
 			   ,(cond ((not (null form2)) 
 	  			      `(apply ',(first compiled-forms) (list ,vars-name ,p-vars-name)) 
 	                  `(apply ',(second compiled-forms) (list ,vars-name ,p-vars-name)))
@@ -237,7 +237,7 @@
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
 	                                (1 `#'s::range-size)
-	                               (2 `#'s::score-position)
+	                                (2 `#'s::score-position)
 					)
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
@@ -249,7 +249,7 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'s::random-force)))))))
+                                (2 `#'s::random-force)))))))
 
 	      (3  `(s::n-values ,(second valuation)
 	              (select-solution ',out
@@ -269,7 +269,7 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'s::random-force)))))))
+                                (2 `#'s::random-force)))))))
 
 	      (4  `(s::ith-value ,(second valuation)
 	              (select-solution ',out
@@ -289,7 +289,7 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'s::random-force)))))))
+                                (2 `#'s::random-force)))))))
 	      (5  `(s::best-value
 	            (s::solution (list ,vars-name ,p-vars-name)
 	             (s::reorder ,(case cost-function
@@ -307,7 +307,7 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                    (2 `#'s::random-force))))
+                                (2 `#'s::random-force))))
 			   ,(cond ((not (null form2)) 
 	  			      `(apply ',(first compiled-forms) (list ,vars-name ,p-vars-name)) 
 	                             `(apply ',(second compiled-forms) (list ,vars-name ,p-vars-name)))
@@ -315,7 +315,7 @@
 	       ))))
 	(scode ;==> SOLVER CODE 
 	 (if count-fail? ;===> COUNT FAILURES ON
-	 `(s::count-scs-failures 
+	 `(s::count-scs-failures
 	   (let* ((,vars-name ,(reclist-vars vars))
 
 	            (,p-vars-name ,(if (functionp compiled-p-vars) 
@@ -325,8 +325,8 @@
 
 	         ,p-constraints
 			 
-		 ,constraints-all
-			 
+		     ,constraints-all
+			 		  
 	         ,solution-code))
 
 	   `(let* ((,vars-name ,(reclist-vars vars));===> COUNT FAILURES OFF
@@ -338,15 +338,19 @@
 
 	         ,p-constraints
 			 
-		 ,constraints-all			 
-
+		     ,constraints-all
+	 
 	         ,solution-code)))
 		)
 
  (case val 
   (2 (setf *screamer-valuation* 2)))
 
-  (let ((scs-function (compile (eval `(defun ,(intern (string (gensym)) :s) () ,scode)))) ;==> COMPILED SOLVER FUNCTION
+  (let ((scs-function (compile (eval `(screamer::defun ,(intern (string (gensym)) :s) () 
+	  								   (declare (optimize (speed 3) (safety 0) (debug 0)))
+									   (declare (type ,(type-of vars) ,vars-name))
+									   (declare (type ,(type-of p-vars) ,p-vars-name))									    
+		                                ,scode)))) ;==> COMPILED SOLVER FUNCTION
         (scs-time (list (get-internal-run-time) (get-internal-real-time))))
 
  (print "Timing evaluation of screamer-solver...")
