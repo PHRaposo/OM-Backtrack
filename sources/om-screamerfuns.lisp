@@ -96,10 +96,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; OM-SCREAMER   
 
-(defvar *max-midic* 10800) ;This can be changed if needed...
+(defvar *max-midic* 12700) ;This can be changed if needed...
 (defvar *min-midic* 0)
-(defvar *midics-range* (om::arithm-ser 0 10800 100))
-(defvar *midi-range* (om::arithm-ser 21 108 1))
+(defvar *midics-range* (om::arithm-ser 0 12700 100))
 (defvar *midics-approx* 100)
 		
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
