@@ -134,7 +134,7 @@
 :initvals '(nil "atom" "off" nil) 
 :indoc '("patch in lambda mode" "string" "string" "list of variables" ) 
 :menuins '((1 (("atom" "atom") ("list" "list")))
-                 (2 (("off" "off") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr")))
+                 (2 (("off" "off") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr") ("growing" "growing")))
                 )
 :doc "Applies constraint recursively to list of variables."
 :icon 487
