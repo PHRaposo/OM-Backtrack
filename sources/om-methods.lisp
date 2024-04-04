@@ -412,3 +412,105 @@
   (x-append (list 'om*v 'om-v 'om+v 'om/v) defaults)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+; -----------------------------------------		
+
+; UTILS
+
+;;;RHYTHMIC CONSTRUCTOR
+
+(defun measure-tree2ratio (mesure)
+ (let* ((signature (car mesure))
+          (vals (cadr mesure))
+          (ratios (mesure-ratios vals)))
+          (om/
+           (om* ratios (car signature))
+           (cadr signature))))
+
+(defun group-ratios (timesig puls ratios)
+ (let* ((tree (mktree ratios timesig))
+        (tree-groups (mapcar #'second (second tree))))
+  (mapcar #'(lambda (groups pulses)
+	        (group-list groups pulses 'linear))	
+	tree-groups puls)
+  )
+ )
+
+(defmethod! cons-tree ((timesig list) (puls list) (subdiv list) (mode string))	
+   :initvals '( ( (5 8) (6 8) (6 8)) ((2 3) (2 2 2) (1)) (((1 1) (1 1 1)) ((1 1) (1 1) (1 1)) ((1.0))) "tree")
+   :indoc '( "list" "list" "list" "string") 
+   :menuins '((3 (("tree" "tree") ("ratio" "ratio"))))
+   :doc
+"Constructs a rhythmic tree from three arguments: 
+(1) A list of time signatures;
+(2) A list of lists of pulses subdivisions;
+(3) A list of lists of beats subdivisions or a list of ratios.
+"   	                   
+   :icon 254
+ (cond ((equal mode "tree") 
+        (list '?
+              (mapcar #'(lambda (tim p s)
+                         (list tim
+                              (mapcar #'list p s)))
+               timesig puls subdiv)))
+			   
+		((equal mode "ratio")	  
+	     (let ((ratio-subdiv (group-ratios timesig puls subdiv))) 
+         (list '?
+               (mapcar #'(lambda (tim p s)
+                          (list tim
+                               (mapcar #'list p s)))
+                timesig puls ratio-subdiv))))
+		 
+	    (t nil)
+  )	   
+ )
+ 
+(defun tree-rotations (tree)
+ (let* ((ratios (tree2ratio tree))
+        (timesig (get-time-sig tree))
+        (rot-positions (om?::all-rotations (arithm-ser 0 (1- (length ratios)) 1)))
+        (rotations (mapcar #'(lambda (pos)
+                         (posn-match ratios pos)) rot-positions)))
+ (mapcar #'(lambda (ratios-list)
+                (mktree ratios-list timesig)) 
+  rotations)))
+
+(defmethod! cons-subdiv ((subdiv list) &optional rest-pos tie-pos)
+   :initvals '( (4 3 4 6) () ())
+   :indoc '( "list" "list" "list") 
+   :doc
+"Constructs the subdivisions of a measure.
+"   	                   
+   :icon 254
+ (let ((beats (mapcar #'(lambda (x) (repeat-n 1 x)) subdiv))
+        (rests (if (null rest-pos) (repeat-n nil (length subdiv)) rest-pos))
+        (ties (if (null tie-pos) (repeat-n nil (length subdiv)) tie-pos)))
+(mapcar #'(lambda (beat rests ties)
+ (loop for n in beat 
+          for x from 0 to (1- (length beat))
+          collect (cond ((member x rests) (* -1 n))
+                               ((member x ties) (float n))
+                               (t n))))
+beats rests ties)))
+
+; VOICE-MERGER
+
+(defun voice-merger-internal (list accumul)
+(cond  ((null list) accumul)
+           ((null accumul) (voice-merger-internal (cdr list) (car list)))
+           (t  (voice-merger-internal (cdr list) (merger (car list) accumul)))))
+
+(defmethod! voice-merger ((objs list)) 
+   :initvals '(nil) 
+   :indoc '("list of voices")
+   :icon 253
+   :doc "Merges a list of voices into a new voice object."
+(voice-merger-internal objs nil))
+
+(defmethod! voice-merger ((self om::poly)) 
+   :initvals '(nil) 
+   :indoc '("poly object")
+   :icon 253
+   :doc "Merges a list of voices into a new voice object."
+(voice-merger-internal (om::voices self) nil))
