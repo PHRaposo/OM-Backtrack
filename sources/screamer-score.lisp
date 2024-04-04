@@ -866,14 +866,6 @@ domain-object))
 
  (list pitch-domains chords-domains pitch-dur-domains pitch-onset-domains pitch-dur-onset-domains midics-domain)))
 
-(defun measure-tree2ratio (mesure)
- (let* ((signature (car mesure))
-          (vals (cadr mesure))
-          (ratios (mesure-ratios vals)))
-          (om/
-           (om* ratios (car signature))
-           (cadr signature))))
-
 (defun get-measure-rest-places (measure)
  (let ((tree (list '? (list (tree measure)))))
   (get-rest-places tree)))
