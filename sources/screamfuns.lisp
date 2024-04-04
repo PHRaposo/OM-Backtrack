@@ -16,6 +16,11 @@
       (cons (a-member-of dom)
             (list-of-members-of (1- n) dom))))
 
+(defun list-of-random-members-of (n dom)
+  (if (zerop n) nil
+      (cons (a-random-member-of dom)
+            (list-of-random-members-of (1- n) dom))))
+						
 (defun list-of-integers-between (n low high)
   (if (zerop n) nil
       (cons (an-integer-between low high)
@@ -109,6 +114,22 @@ a value of the list. The value depends on the backtracking caused by the constra
 "
    :icon 486
    (s:a-member-of lst))
+
+(defmethod get-boxcallclass-fun ((self (eql 'a-random-member-of))) 'screamerboxes)
+(defmethod! a-random-member-of  ((lst list))
+ :initvals '((0 1 2 3 4 5)) 
+ :indoc '("list of possible values")
+ :doc "Defines a Screamer variable, in the list of values.
+Without constraints, an-member-of enumerates all the values of the list in random order.
+
+Inputs :
+list : list of possible values
+
+Output:
+a value of the list. The value depends on the backtracking caused by the constraints
+"
+ :icon 486
+ (s:a-random-member-of lst))
  
 (defun appc (fun variables)
   (apply 
@@ -165,6 +186,24 @@ The value depends on the backtracking caused by the constraints
 " 
   :icon 486 
   (s::list-of-members-of n dom))
+
+(defmethod get-boxcallclass-fun ((self (eql 'list-of-random-members-of))) 'screamerboxes)
+(defmethod get-real-funname ((self (eql 'list-of-random-members-of))) self)
+(defmethod! list-of-random-members-of  ((n integer) (dom list))
+:initvals '(2 '(1 2 3))
+:indoc '("number of variables" "list of values")
+:doc "Defines a list of Screamer variables.
+Each variable is a member of dom. 
+
+Inputs :
+n : length of the list
+dom : domain for each variable
+
+Output : a list of n variables in dom. 
+The value depends on the backtracking caused by the constraints
+" 
+:icon 486 
+(s::list-of-random-members-of n dom))
 
 (defmethod get-boxcallclass-fun ((self (eql 'list-of-integers-between))) 'screamerboxes)
 (defmethod get-real-funname ((self (eql 'list-of-integers-between))) self)
