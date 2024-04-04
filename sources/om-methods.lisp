@@ -121,6 +121,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (in-package :om)
 
+(defun mk-growing (vars);==> GROWING LIST ((0) (0 1) (0 1 2) ...)
+ (let* ((list-length (length vars))
+         (posn (loop for x from 0 to (1- list-length)
+                            for y = (arithm-ser 0 x 1)
+                            collect y)))
+ (posn-match vars posn)))
+ 
 ; APPLY-CONTV
 
 (om::defmethod! apply-contv ((cs function) (mode string) (recursive? string) (vars t))  
@@ -143,6 +150,9 @@
 
            ((equal recursive? "car-cdr") 
            (om?::funcallv-rec-car-cdr cs vars))
+
+           ((equal recursive? "growing") 
+           (mapcar cs (mk-growing vars)))
 
            (t (om?::less-deep-mapcar cs vars))
           ))
