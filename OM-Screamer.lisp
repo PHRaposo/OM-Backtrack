@@ -78,7 +78,7 @@
 ;--------------------------------------------------
 
 
-(fill-library '( ("Backtrack" Nil Nil (an-integer-between a-member-of apply-cont list-of-members-of list-of-integers-between a-chord-in 
+(fill-library '( ("Backtrack" Nil Nil (an-integer-between a-member-of a-random-member-of apply-cont list-of-members-of list-of-random-members-of list-of-integers-between a-chord-in 
 	                                   list-of-chords-in alldiff? growing?) Nil)
 									   
 				 ("Pc-set-theory" 
@@ -96,9 +96,7 @@
  					 ) Nil Nil Nil)
 	   		       ("Screamer-Score"
 	   		        (("main-functions" nil nil (screamer-score screamer-score-domain constraint-one-voice constraint-harmony constraint-profile constraint-measure) nil)
-	  				 ("utils" nil nil (contain-variables? pcset-equalv constraint-scale-one-voice 
-						               constraint-chords-alldiff-notes no-crossing-voices not-parallel-fifths-octaves 
-									   constraint-chord-setclass quadratic-bezier cubic-bezier) nil)				   
+	  				 ("utils" nil nil (quadratic-bezier cubic-bezier) nil)				   
 	   			     ) Nil Nil Nil)									   
 		       ("Screamer"
 		           (("primitives" nil nil (s::an-integer-between s::a-member-of s::fail) nil)
