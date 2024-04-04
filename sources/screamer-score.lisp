@@ -197,7 +197,7 @@
 (defun scale-bpf-time (ratios bpf) ;NEEDS WORK!
  (let* ((bpf-y-points (y-points bpf)) 
         (length-lcm (lcm (length ratios) (length bpf-y-points)))
-        (scale-ratios (om-round (om-scale (butlast (dx->x 0 ratios)) 0 (1- length-lcm)) 0)) ;(om-round (om-scale (dx->x (first ratios) ratios) 0 (1- length-lcm)) 0))
+        (scale-ratios (om-round (om-scale (dx->x (first ratios) ratios) 0 (1- length-lcm)) 0)) ;(om-round (om-scale (butlast (dx->x 0 ratios)) 0 (1- length-lcm)) 0))
         (samples (multiple-value-bind (x y z) (om-sample bpf-y-points length-lcm) (third (list x y z)))))
 (simple-bpf-from-list scale-ratios (posn-match samples scale-ratios))))
 
