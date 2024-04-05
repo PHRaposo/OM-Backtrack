@@ -366,14 +366,15 @@ Optional arguments:
   :doc "Return all subsets."
     :icon 487
 (remove-duplicates 
- (flat 
+ (om::flat 
   (mapcar #'(lambda (x)
              (om?-symb->om  (all-subsets (om-symb->om? x)
-                            (if card-min card-min 1)
+                            (if card-min card-min 0)
                             (if card-max card-max (get-card (string x)))
                             (if forbid forbid nil))))
              fn)
- :test #'equal))) 
+ )
+ :test #'equal))
 
 (om::defmethod! SCs-card ((card integer))
   :initvals '(6)
