@@ -149,18 +149,21 @@ z))
 (defun pcv? (vars fn)
  (equalv (fnv vars) fn))
  
-(defun all-subsets (fn card-min card-max forbid)
+(defun all-subsets (fn card-min card-max &optional forbid)
  (let* ((prime (prime fn))
-         (subsets (remove nil (all-values 
+         (subsets (all-values 
                          (apply (lambda (x) 
                                      (if (and (>= (length x) card-min) 
                                                  (<= (length x) card-max))
                                          x
                                         (fail)))
-                         (list (?::a-subset-of prime)))))))
-(remove-if #'(lambda (item) (member item forbid)) 
-                   (om-symb->om? (remove-duplicates 
-                    (mapcar #'fn subsets))))))
+                         (list (?::a-subset-of prime))))))
+(if forbid
+   (remove-if #'(lambda (item) (member item forbid)) 
+                       (om-symb->om? (remove-duplicates 
+                        (mapcar #'fn subsets))))
+   (om-symb->om? (remove-duplicates  (mapcar #'fn subsets))))
+))
 
 (defun subv? (vars fn card-min card-max forbid)
  (memberv (fnv vars) 
@@ -347,15 +350,30 @@ Optional arguments:
 ;===============================================
 ;;;===> SCS
 
-(om::defmethod! SC-subsets ((fn symbol) &optional (card-min nil) (card-max nil))
-  :initvals '('om::|6-27A| nil nil)
+(om::defmethod! SC-subsets ((fn symbol) &optional (card-min nil) (card-max nil) (forbid nil))
+  :initvals '('om::|6-27A| nil nil nil)
 :indoc '("fn symbol" "integer" "integer") 
   :doc "Return all subsets."
     :icon 487
 (om?-symb->om  (all-subsets (om-symb->om? fn)
                                      (if card-min card-min 1)
                                      (if card-max card-max (get-card (string fn)))
-                                     '(nil))))
+                                     (if forbid forbid nil))))
+
+(om::defmethod! SC-subsets ((fn list) &optional (card-min nil) (card-max nil) (forbid nil))
+  :initvals '(('om::|6-27A| 'om::|6-27B|) nil nil nil)
+:indoc '("fn symbol" "integer" "integer") 
+  :doc "Return all subsets."
+    :icon 487
+(remove-duplicates 
+ (flat 
+  (mapcar #'(lambda (x)
+             (om?-symb->om  (all-subsets (om-symb->om? x)
+                            (if card-min card-min 1)
+                            (if card-max card-max (get-card (string x)))
+                            (if forbid forbid nil))))
+             fn)
+ :test #'equal))) 
 
 (om::defmethod! SCs-card ((card integer))
   :initvals '(6)
