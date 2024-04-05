@@ -12,7 +12,7 @@
 *.log
 *.blg
 *.bbl
-
+*.finderinfo
 
 .DS_Store
 
