@@ -34,15 +34,20 @@
  (setf s::*all-screamer-score-variables* (flat (second all-domains)))
 
  ;(setf *screamer-valuation* 2) <== FOR PRINT-VALUES 
- 
- ;(mapcar #'(lambda (x) <== FOR DEBUG
- ;    (s::attach-noticer!
- ;     #'(lambda()
- ;  (when (s::bound? x)
- ;  (print (position x *all-screamer-score-variables*))
- ;  ))
- ;     x)
-;	 ) *all-screamer-score-variables*)
+	 
+ ;===> FOR DEBUG <===
+ #|
+ (print s::*all-screamer-score-variables*)
+ (mapcar #'(lambda (x) 
+	 (if (s::variable? x)
+     (s::attach-noticer!
+      #'(lambda()
+   (when (s::bound? x)
+   (print (position x s::*all-screamer-score-variables*))
+   ))
+      x)
+ )) s::*all-screamer-score-variables*)
+|#
 		
     (if (screamer-score-constraint-p score-constraints)
        (apply-screamer-score-constraint (get-constraint-parameters score-constraints) all-domains measures-domains)
@@ -156,7 +161,7 @@
     :initvals '(nil "list" (0 1) "pitch" "off" 0)
     :indoc '( "<lambda-patch>" "list" "list-of-voice-numbers" "string" "string" "number") 
     :doc "Constraint for one-voice"
-    :menuins '((1 (("list" "list") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr")))
+    :menuins '((1 (("list" "list") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr") ("growing" "growing")))
                      (3 (
                        ("pitch" "pitch")
                        ("pitch+dur" "pitch+dur")
@@ -164,7 +169,7 @@
                        ("pitch+dur+onset" "pitch+dur+onset")
                           )
                         )
-                    (4 (("off" "off") ("exactly" "exactly") ("less-than" "less-than") ("greater-than" "greater-than")))
+                    (4 (("off" "off") ("exactly" "exactly") ("less-than" "less-than") ("greater-than" "greater-than")("between" "between")))
                      )                        
     :icon 487
    (let ((constraint-object (make-instance 'score-constraint))
@@ -179,11 +184,11 @@
     :initvals '(nil "list" "all-voices" "all" nil "off" 0)
     :indoc '( "<lambda-patch>"  "constraint-mode" "input-mode" "beats-option" "list-of-voice-numbers" "string" "number") 
     :doc "Constraint for one-voice"
-    :menuins '((1 (("list" "list") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr")))
+    :menuins '((1 (("list" "list") ("n-inputs" "n-inputs") ("car-cdr" "car-cdr") ("growing" "growing")))
                      (2 (("all-voices" "all-voices") ("voices-list" "voices-list")))
                      ;(3 (("pitch" "pitch")("pitch+dur" "pitch+dur")("pitch+dur+onset" "pitch+dur+onset")));==> NOT IMPLEMENTED
                      (3 (("all" "all") ("on-beat" "on-beat") ("off-beat" "off-beat") ("1st-beat" "1st-beat"))) ;==> SHOULD BE CHANGED TO 4					 
-                     (5 (("off" "off") ("exactly" "exactly") ("less-than" "less-than") ("greater-than" "greater-than"))) ) ;==> CHANGED TO 5                   
+                     (5 (("off" "off") ("exactly" "exactly") ("less-than" "less-than") ("greater-than" "greater-than")("between" "between") )) ) ;==> SHOULD BE CHANGED TO 6                   
     :icon 487
    (let ((constraint-object (make-instance 'score-constraint))
           (compiled-constraint (fdefinition (compile-screamer-constraint constraint))))
@@ -317,10 +322,10 @@
             (apply-length (if (= 1 fn-inputs-length) 
                                       voice-length 
                                      (- voice-length (1- fn-inputs-length))))
-           (percent (om-round (* (if (equal (first score-constraints) "constraint-one-voice") 
+           (percent (om-round (om* (if (equal (first score-constraints) "constraint-one-voice") 
                                                    (sixth score-constraints) 
                                                    (eighth score-constraints)) 
-                                           (/ apply-length 100)) 
+                                           (om/ apply-length 100)) 
                            0))
            (percent-cs-mode (if (equal (first score-constraints) "constraint-one-voice")
                                             (fifth score-constraints)
@@ -337,6 +342,16 @@
                  (s::assert! (s::=v truesv percent)) 
  				;(setf *p-variables* (x-append test *p-variables*))  
  					))
+					
+				((equal percent-cs-mode "between")
+				                 (let* ((test (if (and (= 1 fn-inputs-length) (not chords?))
+				                                  (mapcar #'(lambda (x) (apply (second score-constraints) (list x))) splitted-list)
+				                                  (mapcar #'(lambda (x) (apply (second score-constraints) x)) splitted-list)))
+				 				        (truesv (om?::sumv (mapcar #'?::reifyv test)))
+				 						)
+				                 (s::assert! (s::andv (s::>=v truesv (first percent))
+								                      (s::<=v truesv (second percent))))
+				 					))
 
                  ((equal percent-cs-mode "less-than")
                   (let* ((test (if (and (= 1 fn-inputs-length) (not chords?))
@@ -377,7 +392,7 @@
             (apply-length (if (= 1 fn-inputs-length) 
                                       voice-length 
                                      (- voice-length (1- fn-inputs-length))))
-           (percent (om-round (* (eighth score-constraints) (/ apply-length 100)) 0))
+           (percent (om-round (om* (eighth score-constraints) (om/ apply-length 100)) 0))
            (percent-cs-mode (seventh score-constraints))
            (splitted-list (split-domain-list1 voice-length fn-inputs-length voice-domain)))
 
@@ -387,7 +402,15 @@
                  (s::assert! (s::=v truesv percent)) 
  				;(setf *p-variables* (x-append test *p-variables*))   
  					))
-
+					
+			((equal percent-cs-mode "between")
+			                 (let* ((test (mapcar #'(lambda (x) (apply (second score-constraints) x)) splitted-list))
+			 				        (truesv (om?::sumv (mapcar #'?::reifyv test)))
+			 						)
+			                 (s::assert! (s::andv (s::>=v truesv (first percent))
+							                      (s::<=v truesv (second percent))))
+			 					))
+										
                  ((equal percent-cs-mode "less-than")
                   (let* ((test (mapcar #'(lambda (x) (apply (second score-constraints) x)) splitted-list))
  				        (truesv (mapcar #'?::reifyv test)) ;(om?::sumv (mapcar #'?::reifyv test))) ;(mapcar #'s::count-truesv test))))
@@ -442,64 +465,16 @@
 
  ((equal (third score-constraints) "car-cdr")
   (progn (om-message-dialog "The percentage constraint ONLY works in constraint-mode <N-INPUTS>.") (om-abort)))
+  
+  ((equal (third score-constraints) "growing")
+   (progn (om-message-dialog "The percentage constraint ONLY works in constraint-mode <N-INPUTS>.") (om-abort)))
 
  (t nil)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; ANOTHER VERSION OF 
-;;; PERCENTAGE-CONSTRAINT 
-;;;USING SCREAMER-PLUS FUNCTIONS 
-;;; EXACTLYV, AT-LEASTV AND AT-MOSTV
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-#|
-(defun percentage-constraint-n-inputs-one-voice (score-constraints voice-domain)
-  (let* ((voice-length (length voice-domain))
-           (fn-inputs-length (length (function-lambda-list (second score-constraints))))
-           (apply-length (if (= 1 fn-inputs-length) 
-                                     voice-length 
-                                    (- voice-length (1- fn-inputs-length))))
-          (percent  (om-round (* (eighth score-constraints) (/ apply-length 100)) 0))
-          (splitted-list (split-domain-list1 voice-length fn-inputs-length voice-domain)))
-   (s::assert!
-     (cond ((equal (seventh score-constraints) "exactly")
-                (?::exactlyv percent (eval `#'(lambda (x) (apply ,(?::constraint-fn (second score-constraints)) x))) splitted-list))
-
-                ((equal (seventh score-constraints) "less-than")
-                 (s::notv (?::at-leastv percent  (eval `#'(lambda (x) (apply ,(?::constraint-fn (second score-constraints)) x))) splitted-list)))
-
-                ((equal (seventh score-constraints) "greater-than")
-                  (s::notv (?::at-mostv percent (eval `#'(lambda (x) (apply ,(?::constraint-fn (second score-constraints)) x))) splitted-list)))
-
-                (t (progn (om-message-dialog "Unknown percentage constraint mode") (om-abort))))
-   )))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;IN PROGRESS
-
-(defun percentage-constraint-one-voice-car-cdr (score-constraints voice-domain)
- (let* ((voice-length (length voice-domain))
-          (apply-length (1- voice-length))
-          (percent (om-round (* (eighth score-constraints) (/ apply-length 100)) 0))
-          (splitted-list (reverse (split-domain-list2 apply-length voice-domain))))
-
-     (cond ((equal (seventh score-constraints) "exactly")
-                 (let* ((test (?::mapcarv #'(lambda (x) (funcall (second score-constraints) (first x) (second x))) splitted-list))
-                         (trues (apply #'s::+v (list (apply #'s::count-truesv test)))))
-                  (s::assert! (?::ifv (s::=v trues percent) t nil))))
-
-                ((equal (seventh score-constraints) "less-than")
-                 (let* ((test (?::mapcarv #'(lambda (x) (funcall (second score-constraints) (first x) (second x))) splitted-list))
-                         (trues (apply #'s::+v (list (apply #'s::count-truesv test)))))
-                  (s::assert! (?::ifv (s::<v trues percent) t nil))))
-
-                ((equal (seventh score-constraints) "greater-than")
-                 (let* ((test (?::mapcarv #'(lambda (x) (funcall (second score-constraints) (first x) (second x))) splitted-list))
-                         (trues (apply #'s::+v (list (apply #'s::count-truesv test)))))
-                  (s::assert! (?::ifv (s::>v trues percent) t nil))))
-
-                (t (progn (om-message-dialog "Unknown percentage constraint mode") (om-abort))))))
-
+ #|
+ 
+ ;;; ===> THIS IS FOR IMPLEMENTING PERCENTAGE CONSTRAINT IN CAR-CDR OR GROWING-LIST MODES 
+ 
 (defun split-domain-list2 (apply-length voice-domain);==> CARD-CDR ((0 (1 2 3 4 5)) (1 (2 3 4 5)) (2 (3 4 5)) ...)
  (let* ((posn (loop for x from 0 to (1- apply-length)
           for y = (list x (arithm-ser (1+ x) apply-length 1))
@@ -511,6 +486,7 @@
           for y = (arithm-ser 0 x 1)
  collect y)))
  (posn-match voice-domain posn)))
+ 
 |#
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -539,8 +515,10 @@
            (cond ((equal (third score-constraints) "list") (apply (second score-constraints) (list voice)))
 
                      ((equal (third score-constraints) "n-inputs")
-
                       (apply-contv (second score-constraints) "list" "n-inputs" voice))
+					  
+                      ((equal (third score-constraints) "growing")
+                       (apply-contv (second score-constraints) "list" "growing" voice))
 
                      (t (apply-contv (second score-constraints) "list" "car-cdr" voice))))
 
@@ -563,8 +541,10 @@
                       (apply (second score-constraints) (list domain)))
 
                       ((equal (third score-constraints) "n-inputs")
-
                       (apply-contv  (second score-constraints) "list" "n-inputs" domain))
+	
+                      ((equal (third score-constraints) "growing")
+                      (apply-contv  (second score-constraints) "list" "growing" domain))
 
                       (t (apply-contv  (second score-constraints) "list" "car-cdr"  domain))))
 
@@ -578,20 +558,24 @@
                                     (apply (second score-constraints) (list vars)))
 
                                     ((equal (third score-constraints) "n-inputs")
-
                                      (apply-contv  (second score-constraints) "list" "n-inputs" vars))
+									 
+                                     ((equal (third score-constraints) "growing")
+                                      (apply-contv  (second score-constraints) "list" "growing" vars))									 
 
                                       (t (apply-contv  (second score-constraints) "list" "car-cdr"  vars))))
                         voices-chords))
 
                           (cond 
                          ((equal (third score-constraints) "list")
-                                     (apply (second score-constraints) (list (mapcar #'(lambda (chords-domain) (posn-match chords-domain (fifth score-constraints))) domain))))
+                                 (apply (second score-constraints) (list (mapcar #'(lambda (chords-domain) (posn-match chords-domain (fifth score-constraints))) domain))))
 
-                                     ((equal (third score-constraints) "n-inputs")
-									 
-                                       (apply-contv  (second score-constraints) "list" "n-inputs"  (mapcar #'(lambda (chords-domain) (posn-match chords-domain (fifth score-constraints))) domain)))
+                                     ((equal (third score-constraints) "n-inputs")									 
+                                      (apply-contv  (second score-constraints) "list" "n-inputs"  (mapcar #'(lambda (chords-domain) (posn-match chords-domain (fifth score-constraints))) domain)))
 
+                                     ((equal (third score-constraints) "growing")									 
+                                      (apply-contv  (second score-constraints) "list" "growing"  (mapcar #'(lambda (chords-domain) (posn-match chords-domain (fifth score-constraints))) domain)))
+										 
                                      (t (apply-contv  (second score-constraints) "list" "car-cdr"  (mapcar #'(lambda (chords-domain) (posn-match chords-domain (fifth score-constraints))) domain))))))
 
          (t (progn (om-message-dialog "UNKNOWN CONSTRAINT OPTION") (om-abort))))))
@@ -648,6 +632,9 @@
 
                       ((equal (third score-constraints) "n-inputs")
                       (apply-contv  (second score-constraints) "list" "n-inputs" voice))
+					  
+                      ((equal (third score-constraints) "growing")
+                      (apply-contv  (second score-constraints) "list" "growing" voice))
 
                       (t (apply-contv  (second score-constraints) "list" "car-cdr" voice))))
      voices-domain))))
@@ -666,6 +653,9 @@
 
                       ((equal (third score-constraints) "n-inputs")
                       (apply-contv  (second score-constraints) "list" "n-inputs"  domain))
+					  
+                      ((equal (third score-constraints) "growing")
+                      (apply-contv  (second score-constraints) "list" "growing"  domain))
 
                       (t (apply-contv  (second score-constraints) "list" "car-cdr"  domain))))
 
@@ -680,6 +670,9 @@
 
                                     ((equal (third score-constraints) "n-inputs")
                                      (apply-contv  (second score-constraints) "list" "n-inputs" vars))
+									 
+                                     ((equal (third score-constraints) "growing")
+                                      (apply-contv  (second score-constraints) "list" "growing" vars))
 
                                       (t (apply-contv  (second score-constraints) "list" "car-cdr"  vars))))
                         voices-chords))
@@ -690,6 +683,9 @@
 
                                      ((equal (third score-constraints) "n-inputs")
                                        (apply-contv  (second score-constraints) "list" "n-inputs"  (mapcar #'(lambda (chords-domain) (posn-match chords-domain (fifth score-constraints))) domain)))
+
+                                       ((equal (third score-constraints) "growing")
+                                         (apply-contv  (second score-constraints) "list" "growing"  (mapcar #'(lambda (chords-domain) (posn-match chords-domain (fifth score-constraints))) domain)))
 
                                      (t (apply-contv  (second score-constraints) "list" "car-cdr"  (mapcar #'(lambda (chords-domain) (posn-match chords-domain (fifth score-constraints))) domain))))))
 
@@ -826,8 +822,8 @@ domain-object))
 
  (let ((notes (lmidic chord)))
    (if (= (length notes) 1)
-       (x-append notes ratio)
-       (list notes ratio)))))
+       (x-append (s::variablize (car notes)) ratio)
+       (list (mapcar #'s::variablize notes) ratio)))))
 
 (defun pitch-dur-vars (ratio domain mcs-approx random?)
  (if (< ratio 0)
