@@ -34,7 +34,7 @@
 ;;; loaded and you wish to recompile the entire file, the recompilation will
 ;;; proceed much faster if you first do:
 ;;; (CLRHASH SCREAMER::*FUNCTION-RECORD-TABLE*)
-
+	 
 (in-package :screamer)
 
 (declaim (declaration magic))
@@ -102,10 +102,6 @@ disable it. Default is platform dependent.")
 (defvar-compile-time *tagbody-tags* '() "This must be globally NIL.")
 
 (defvar *trail* (make-array 4096 :adjustable t :fill-pointer 0) "The trail.")
-
-(defvar *screamer-results* nil
-  "A global variable storing the results of the nearest enclosing `-VALUES' or `-VALUES-PROB' form.
-Can be used for finer-grained control of nondeterminism.") ;<== from swapneils 
 
 (defvar *all-screamer-score-variables* nil
     "A global variable storing the order which variables (and non-variables) will appear in the musical score representation 
@@ -2700,62 +2696,28 @@ I."
                             (decf ,counter))))
          ,default))))
 
-(defmacro-compile-time n-values (n form &optional (default-on-failure nil) (default nil)) ;<== from swapneils
-   "Returns the first N nondeterministic values yielded by FORM.
-
- N must be an integer denoting the number of values to return, or a form producing such an integer.
-
- No further execution of FORM is attempted after it successfully yields the
- desired value.
-
- If FORM fails before yielding the N values to be returned, then DEFAULT is evaluated and its value returned
- instead. DEFAULT defaults to NIL if not present.
-
- Local side effects performed by FORM are undone when N-VALUES returns, but
- local side effects performed by DEFAULT and by N are not undone when N-VALUES
- returns.
-
- An N-VALUES expression can appear in both deterministic and nondeterministic
- contexts. Irrespective of what context the N-VALUES appears in, FORM is
- always in a nondeterministic context, while DEFAULT and N are in whatever
- context the N-VALUES appears in.
-
- An N-VALUES expression is nondeterministic if DEFAULT is present and is
- nondeterministic, or if N is nondeterministic. Otherwise it is deterministic.
-
- If DEFAULT is present and nondeterministic, and if FORM fails, then it is
- possible to backtrack into the DEFAULT and for the N-VALUES expression to
- nondeterministically return multiple times.
-
- If N is nondeterministic then the N-VALUES expression operates
- nondeterministically on each value of N. In this case, backtracking for each
- value of FORM and DEFAULT is nested in, and restarted for, each backtrack of
- N."
-   (when (numberp n) (assert (and (integerp n) (>= n 0))))
-   (let ((counter (gensym "I"))
-         (value (gensym "value"))
-         (value-list '*screamer-results*)
-         (last-value-cons (gensym "last-value-cons")))
-     `(block n-values
-        (let* ((,counter (value-of ,n))
-               (,value-list nil)
-               (,last-value-cons nil))
-          (declare (integer ,counter) ((or cons null) ,value-list))
-          (for-effects
-            (unless (zerop ,counter)
-              (global
-                (let ((,value ,form))
-                  (decf ,counter)
-                  ;; Add the value to the collected list
-                  (if (null ,value-list)
-                      (setf ,last-value-cons (cached-list ,value)
-                            ,value-list ,last-value-cons)
-                      (setf (rest ,last-value-cons) (cached-list ,value)
-                            ,last-value-cons (rest ,last-value-cons)))
-                  (when (zerop ,counter)
-                    (return-from n-values ,value-list))))))
-          ,(if default-on-failure default value-list)))))
-				  
+(defmacro-compile-time n-values (n
+ 		    &body forms)
+"FROM T2L-SCREAMER: 
+ Copyright (c) 2007, Kilian Sprotte. All rights reserved."
+ (let ((values (gensym "VALUES-"))
+       (last-value-cons  (gensym "LAST-VALUE-CONS-"))
+       (value (gensym "VALUE-")))
+   `(let ((,values '())
+          (,last-value-cons nil)
+    (number 0))
+      (block n-values
+  (for-effects
+    (let ((,value (progn ,@forms)))
+      (global (cond ((null ,values)
+ 		    (setf ,last-value-cons (list ,value))
+ 		    (setf ,values ,last-value-cons))
+ 		   (t (setf (rest ,last-value-cons) (list ,value))
+ 		      (setf ,last-value-cons (rest ,last-value-cons))))
+ 	     (incf number))
+      (when (>= number ,n) (return-from n-values)))))
+      ,values)))
+			  
 ;;; In classic Screamer TRAIL is unexported and UNWIND-TRAIL is exported. This
 ;;; doesn't seem very safe or sane: while users could conceivably want to use
 ;;; TRAIL to track unwinds, using UNWIND-TRAIL seems inherently dangerous
