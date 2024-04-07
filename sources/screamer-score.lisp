@@ -157,7 +157,7 @@
 
 (defmethod! constraint-one-voice ((constraint function) (constraint-mode string)
                                                        (voices list)
-                                                       (domain string) &optional (percentage-mode "off") percentage) 												  
+                                                       (domain string) &key (percentage-mode "off") percentage) 												  
     :initvals '(nil "list" (0 1) "pitch" "off" 0)
     :indoc '( "<lambda-patch>" "list" "list-of-voice-numbers" "string" "string" "number") 
     :doc "Constraint for one-voice"
@@ -180,7 +180,7 @@
 (defmethod! constraint-harmony ((constraint function) ;INCLUDE DOMAIN OPTIONS (PITCH - PITCH/DUR - PITCH/DUR/ONSET AS THIRD ARGUMENT)
                                                      (constraint-mode string)                                                
                                                      (input-mode string) 
-													 (beats string) &optional voices (percentage-mode "off") percentage) 												  
+													 (beats string) &key voices (percentage-mode "off") percentage) 												  
     :initvals '(nil "list" "all-voices" "all" nil "off" 0)
     :indoc '( "<lambda-patch>"  "constraint-mode" "input-mode" "beats-option" "list-of-voice-numbers" "string" "number") 
     :doc "Constraint for one-voice"

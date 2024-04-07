@@ -387,7 +387,7 @@
 
  (print "Timing evaluation of screamer-solver...")
 
-  (let ((solution (select-solution out (funcall scs-function) (if (= 5 val) val nil)))) ;==> GET THE SOLUTION
+  (let ((solution (select-solution out (funcall scs-function) (if (= 5 val) val nil) p-vars))) ;==> GET THE SOLUTION
    (print-scs-time scs-time)
 
    (progn (setf *screamer-valuation* pref-valuation)
@@ -424,26 +424,39 @@
 (defun list-of-listp (thing) (and (listp thing) (every #'listp thing)))
 (deftype list-of-lists () '(satisfies list-of-listp))
 
-(defun select-solution (out solution &optional valuation)
+(defun select-solution (out solution &optional valuation p-variables?)
  (if valuation
-    (x-append (select-solution out (first solution))
+    (x-append (select-solution out solution nil p-variables?)
                      (second solution))
  (cond
-  ((null out) solution)
-
-  ((and (listp out) (every #'listp out))
-   (let ((res (mapcar #'(lambda (s o)
-                                  (posn-match s o))
-                  solution out)))
- (if (some #'null res)
-    (car (remove nil res))
-    res)))
-
- ((and (listp out) (every #'atom out))
-  (posn-match solution out))
-
-  (t (progn (om-message-dialog "ERROR: the <OUTPUT> should be a list of positions (e.g. '(1 3)) or a list of lists of positions (e.g. '((0 2) (1 3)))") 
-                 (om-abort))))))
+  ((null out) 
+  (if p-variables?
+      (first solution)
+       solution))
+  ((and (symbolp out) 
+           (equal out :all))
+    solution)
+  ((and (listp out) p-variables?)
+    (let ((variables 
+           (cond ((null (first out)) nil)
+                     ((atom (first solution)) (first solution))
+                      ((equal (first out) :all) (first solution))
+                      ((listp (first out)) (posn-match (first solution) (first out)))
+                      (t nil)))
+           (p-variables 
+           (cond ((null (second out)) nil)
+                     ((atom (second solution)) (second solution))
+                      ((equal (second out) :all) (second solution))
+                      ((listp (second out)) (posn-match (second solution) (second out)))
+                      (t nil))))
+     (if variables 
+         (if p-variables (list variables p-variables) variables)
+     p-variables)))
+  ((and (listp out) (null p-variables?))
+   (posn-match solution out))
+  (t (progn (om-message-dialog "ERROR: the <OUTPUT> should be a symbol :all or nil, or a list with two symbols [ex. (:all nil)] or a list containing two lists of positions [ex. ((0 2) (1 3))]")
+            (om-abort))))
+ ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;TIME 
