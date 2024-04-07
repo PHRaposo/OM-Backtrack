@@ -432,9 +432,12 @@
   ((null out) solution)
 
   ((and (listp out) (every #'listp out))
-   (mapcar #'(lambda (s o)
-     (posn-match s o))
-   solution out))
+   (let ((res (mapcar #'(lambda (s o)
+                                  (posn-match s o))
+                  solution out)))
+ (if (some #'null res)
+    (car (remove nil res))
+    res)))
 
  ((and (listp out) (every #'atom out))
   (posn-match solution out))
