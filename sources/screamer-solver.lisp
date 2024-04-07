@@ -426,7 +426,7 @@
 
 (defun select-solution (out solution &optional valuation p-variables?)
  (if valuation
-    (x-append (select-solution out solution nil p-variables?)
+    (x-append (select-solution out (first solution) nil p-variables?)
                      (second solution))
  (cond
   ((null out) 
