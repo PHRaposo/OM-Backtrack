@@ -8,15 +8,18 @@
                                                          (constraints nil) 
                                                          (p-constraints nil)
 						         (constraints-all nil) 
-                                                         (screamer-valuation "one-value") 
+                                                         (screamer-valuation "one-value")
+							 (n-ith-value nil)
                                                          (force-function "static-ordering linear-force")
-                                                         (output nil) (count-failures? nil) (objective-form nil) (form2 nil)) 
+							(map-solutions nil)
+                                                         (output nil) (count-failures? nil)
+							(objective-form nil) (form2 nil)) 
 													  
-    :initvals '(nil nil nil nil nil "one-value" "static-ordering linear-force" nil nil nil nil)
+    :initvals '(nil nil nil nil nil "one-value" nil "static-ordering linear-force" nil nil nil nil nil)
 
     :indoc '("variable or list" "propagation-variables<lambda-patch>" "constraint<lambda-patch> or list" 
 		"propagation-constraints<lambda-patch>" "constraints-all<lambda-patch>"  "one-value, all-values, listener, n-values, ith-value or best-value" 
-                "ordering-force-functions" "symbol or list" "symbol t or nil" "<lambda-patch>"  "<lambda-patch>") 
+                "integer" "ordering-force-functions" "map-solutions<lambda-patch>" "list" "symbol t or nil" "<lambda-patch>"  "<lambda-patch>") 
 
     :doc "Screamer Constraint Solver
   <VARIABLES> variable or list of variables.
@@ -25,24 +28,27 @@
   <P-CONSTRAINTS> lambda patch or list of lambda patches => constraints to propagation variables.
   <CONSTRAINTS-ALL> lambda patch or list of lambda patches with two inputs (vars / p-vars) => constraints to all variables.  
   <SCREAMER-VALUATION> menuin with four options (one-value, all-values, listener, n-values or ith-value).
-  <FORCE-FUNCTION> a string or should be connected to force-function.  
-  <OUTPUT> symbol :all or nil or list with symbols and positions. Ex.: (nil :all) or ((0 2) (1 3)). 
-  If a third argument is supplied <om-function-name>, applies a function in the list of results. Ex.: (:all nil mat-trans).
- <COUNT-FAILURES?> symbol t or nil.
- <OBJECTIVE-FORM>and<FORM2>: lambda patches with two inputs (vars / p-vars) -> best-value forms (experimental)." 
+  <N-ITH-VALUE> integer to be used with n-values or ith-value.
+  <FORCE-FUNCTION> a string or should be connected to force-function.
+  <MAP-SOLUTIONS> lambda patch or list of lambda patches => constraints to solutions. Will backtrack if fails.   
+  <OUTPUT> List of positions (for variables only) or list of lists of positions (for variables and propagation variables).
+ <COUNT-FAILURES?> string -> on or off.
+ <OBJECTIVE-FORM>and<FORM2>: lambda patches with one input (variables only) or two inputs (variables and propagation variables) -> best-value forms." 
 
     :menuins '((5 (("one-value" "one-value") ("all-values" "all-values") 
-                           ("listener" "listener") ("n-values" '("n-values" 10)) ("ith-value" '("ith-value" 10)) ("best-value" "best-value") )) 
-                     (8 (("nil" nil) ("t" t))) )                        
+                           ("listener" "listener") ("n-values" "n-values") ("ith-value" "ith-value") ("best-value" "best-value") )) 
+                     (10 (("off" nil) ("on" t))) )                        
     :icon 487 
 
  (screamer-solution variables 
                                p-variables 
                                constraints 
                                p-constraints
-			       			   constraints-all 
-                               screamer-valuation 
-                               force-function 
+			       constraints-all 
+                               screamer-valuation
+							   n-ith-value  
+                               force-function
+			       map-solutions
                                output 
                                count-failures? 
                                objective-form 
@@ -51,7 +57,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; SCREAMER-SOLUTION
 
-(defun screamer-solution (vars p-vars cs p-cs cs-all valuation ordering-force out count-fail? obj-form form2)
+(defun screamer-solution (vars p-vars cs p-cs cs-all valuation n-ith ordering-force map-s out count-fail? obj-form form2)
    (let* ((pref-valuation *screamer-valuation*)   
           (compiled-p-vars ;==> PROPAGATION VARIABLES
            (if (functionp p-vars) 
@@ -70,15 +76,20 @@
             (if cs-all 
                (if (functionp cs-all) 
                 (fdefinition (compile-screamer-constraint cs-all))
-                (mapcar #'(lambda (x) (fdefinition (compile-screamer-constraint x))) cs-all))))		   
+                (mapcar #'(lambda (x) (fdefinition (compile-screamer-constraint x))) cs-all))))
+            (compiled-map-sol ;==> COMPILED CONSTRAINTS MAP SOLUTIONS
+             (if map-s 
+                (if (functionp map-s) 
+                 (fdefinition (compile-screamer-constraint map-s))
+                 (mapcar #'(lambda (x) (fdefinition (compile-screamer-constraint x))) map-s))))		   
          (compiled-forms ;==> BEST-VALUE FORMS
 		 (if obj-form
 		     (if form2 
 		         (mapcar #'(lambda (x) (fdefinition (compile-screamer-constraint x))) (list obj-form form2))
 		   	 (fdefinition (compile-screamer-constraint obj-form)))
 		      nil))
-		 (vars-name (intern (string (gensym)) :s)) ;==> NAME FOR VARIABLES (SYMBOL) 		 
-		 (p-vars-name (intern (string (gensym)) :s)) ;==> NAME FOR PROPAGATION VARIABLES (SYMBOL)
+		 (vars-name (intern (string (gensym "vars")) :om)) ;==> NAME FOR VARIABLES (SYMBOL) 		 
+		 (p-vars-name (intern (string (gensym "p-vars")) :om)) ;==> NAME FOR PROPAGATION VARIABLES (SYMBOL)
 		 (constraints ;==> CONSTRAINTS CODE
 		    (if compiled-constraints
 		     (if (functionp compiled-constraints) 
@@ -100,12 +111,11 @@
 	    (val (cond ((equal valuation "one-value") 0) 
 	                 ((equal valuation "all-values") 1)
 	                 ((equal valuation "listener") 2)
-	                 ((equal valuation "best-value") 5)
-	                 ((listp valuation)
-	                  (cond  ((equal (first valuation) "n-values") 3)
-	                         ((equal (first valuation) "ith-value") 4)
-	                         (t (om-message-dialog "UNKNOWN VALUATION OPTION!") (om-abort))))		  		
-			 (t (progn (om-message-dialog "UNKNOWN VALUATION OPTION!") (om-abort)))))
+	                 ((equal valuation "n-values") 3)
+	                 ((equal valuation "ith-value") 4)
+	                 ((equal valuation "best-value") 5)		  		
+			         (t (progn (om-message-dialog "UNKNOWN VALUATION OPTION!") (om-abort)))))
+	   (n-ith-value n-ith)
 	   (ordering ;==> ORDERING
 		(let ((ord (first (string-to-list ordering-force))))
 	     (cond ((equal "static-ordering" ord) 0)
@@ -146,56 +156,67 @@
 	    (0 ;==>  STATIC-ORDERING
 	     (case val
 	      (0 `(s::one-value
-	      (select-solution ',out
-	       (s::solution (list ,vars-name ,p-vars-name)
+			  (apply-cont ',compiled-map-sol
+	       (s::solution ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	      (s::static-ordering ,(case force-function 
 	                                     (0 `#'s::linear-force)
 	                                     (1 `#'s::divide-and-conquer-force)
                                          (2 `#'s::random-force)))))))
 	      (1 `(s::all-values
-	             (select-solution ',out
-	              (s::solution (list ,vars-name ,p-vars-name)
+			   (apply-cont ',compiled-map-sol
+	              (s::solution  ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	               (s::static-ordering ,(case force-function 
 	                                             (0 `#'s::linear-force)
 	                                             (1 `#'s::divide-and-conquer-force)
                                                  (2 `#'s::random-force)))))))
 	      (2  `(s::print-values
-	              (select-solution ',out
-	               (s::solution (list ,vars-name ,p-vars-name)
+			    (apply-cont ',compiled-map-sol
+	               (s::solution ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	                (s::static-ordering ,(case force-function 
 	                                              (0 `#'s::linear-force)
 	                                              (1 `#'s::divide-and-conquer-force)
                                                   (2 `#'s::random-force)))))))
-	      (3  `(s::n-values ,(second valuation)
-	              (select-solution ',out
-	               (s::solution (list ,vars-name ,p-vars-name)
+	      (3  `(s::n-values ,n-ith-value
+		  	 (apply-cont ',compiled-map-sol
+	               (s::solution  ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	                (s::static-ordering ,(case force-function 
 	                                              (0 `#'s::linear-force)
 	                                              (1 `#'s::divide-and-conquer-force)
                                                   (2 `#'s::random-force)))))))																  
-	      (4  `(s::ith-value ,(second valuation)
-	              (select-solution ',out
-	               (s::solution (list ,vars-name ,p-vars-name)
+	      (4  `(s::ith-value ,n-ith-value
+		  	 (apply-cont ',compiled-map-sol
+	               (s::solution ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	                (s::static-ordering ,(case force-function 
 	                                              (0 `#'s::linear-force)
 	                                              (1 `#'s::divide-and-conquer-force)
                                                   (2 `#'s::random-force)))))))
 	      (5  `(s::best-value
-	            (s::solution (list ,vars-name ,p-vars-name)
+			   (apply-cont ',compiled-map-sol
+	            (s::solution ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	             (s::static-ordering ,(case force-function 
 	                                   (0 `#'s::linear-force)
 	                                   (1 `#'s::divide-and-conquer-force)
-                                       (2 `#'s::random-force))))
+                                       (2 `#'s::random-force)))))
 			   ,(cond ((not (null form2)) 
-	  			      `(apply ',(first compiled-forms) (list ,vars-name ,p-vars-name)) 
-	                  `(apply ',(second compiled-forms) (list ,vars-name ,p-vars-name)))
-					  (t `(apply ',compiled-forms (list ,vars-name ,p-vars-name))))))																	  
+	  			      `(apply ',(first compiled-forms) ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  `(list ,vars-name))) 
+	                  `(apply ',(second compiled-forms) ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  `(list ,vars-name)) ))
+					  (t `(apply ',compiled-forms ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  `(list ,vars-name)))))))																	  
 		))      
 	  (1 ;==> REORDER
 	     (case val
 	      (0  `(s::one-value 
-	       (select-solution ',out
-	       (s::solution (list ,vars-name ,p-vars-name)
+			   (apply-cont ',compiled-map-sol
+	       (s::solution ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	      (s::reorder ,(case cost-function
 	                            (0 `#'s::domain-size)
 	                            (1 `#'s::range-size)
@@ -213,13 +234,14 @@
 	                            (1 `#'s::divide-and-conquer-force)
                                     (2 `#'s::random-force)))))))
 	      (1 `(s::all-values 
-	           (select-solution ',out                           
-	            (s::solution (list ,vars-name ,p-vars-name)
+			   (apply-cont ',compiled-map-sol                      
+	            (s::solution  ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	      (s::reorder ,(case cost-function
 	                            (0 `#'s::domain-size)
 	                            (1 `#'s::range-size)
 	                            (2 `#'s::score-position)
-								)
+				    )
 	                       ,(case terminate?
 	                            (0 `#'(lambda (x) (declare (ignore x)) nil))
 	                            (1 `#'(lambda (x) (< x 1e-6)))
@@ -231,9 +253,10 @@
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
                                     (2 `#'s::random-force)))))))
-	      (2  `(s::print-values 
-	             (select-solution ',out
-	             (s::solution (list ,vars-name ,p-vars-name)
+	      (2  `(s::print-values
+			   (apply-cont ',compiled-map-sol 
+	             (s::solution  ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
 	                                (1 `#'s::range-size)
@@ -251,9 +274,10 @@
 	                            (1 `#'s::divide-and-conquer-force)
                                 (2 `#'s::random-force)))))))
 
-	      (3  `(s::n-values ,(second valuation)
-	              (select-solution ',out
-	               (s::solution (list ,vars-name ,p-vars-name)
+	      (3  `(s::n-values ,n-ith-value
+		   (apply-cont ',compiled-map-sol
+	               (s::solution  ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
 	                                (1 `#'s::range-size)
@@ -271,9 +295,10 @@
 	                            (1 `#'s::divide-and-conquer-force)
                                 (2 `#'s::random-force)))))))
 
-	      (4  `(s::ith-value ,(second valuation)
-	              (select-solution ',out
-	               (s::solution (list ,vars-name ,p-vars-name)
+	      (4  `(s::ith-value ,n-ith-value
+		   (apply-cont ',compiled-map-sol
+	               (s::solution  ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
 	                                (1 `#'s::range-size)
@@ -291,7 +316,9 @@
 	                            (1 `#'s::divide-and-conquer-force)
                                 (2 `#'s::random-force)))))))
 	      (5  `(s::best-value
-	            (s::solution (list ,vars-name ,p-vars-name)
+			   (apply-cont ',compiled-map-sol
+	            (s::solution ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  vars-name)
 	             (s::reorder ,(case cost-function
 	                                (0 `#'s::domain-size)
 	                                (1 `#'s::range-size)
@@ -307,11 +334,14 @@
 	                       ,(case reorder-force 
 	                            (0 `#'s::linear-force)
 	                            (1 `#'s::divide-and-conquer-force)
-                                (2 `#'s::random-force))))
+                                (2 `#'s::random-force)))))
 			   ,(cond ((not (null form2)) 
-	  			      `(apply ',(first compiled-forms) (list ,vars-name ,p-vars-name)) 
-	                             `(apply ',(second compiled-forms) (list ,vars-name ,p-vars-name)))
-		              (t `(apply ',compiled-forms (list ,vars-name ,p-vars-name))))))
+	  			      `(apply ',(first compiled-forms) ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  `(list ,vars-name)) ) 
+	                             `(apply ',(second compiled-forms) ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  `(list ,vars-name)) ))
+		              (t `(apply ',compiled-forms ,(if p-vars `(list ,vars-name ,p-vars-name)
+                                                  `(list ,vars-name)) )))))
 	       ))))
 	(scode ;==> SOLVER CODE 
 	 (if count-fail? ;===> COUNT FAILURES ON
@@ -343,29 +373,25 @@
 	         ,solution-code)))
 		)
 
+;(print scode) ;<== FOR DEBUG
+
  (case val 
   (2 (setf *screamer-valuation* 2)))
 
-  (let ((scs-function (compile (eval `(screamer::defun ,(intern (string (gensym)) :s) () 
-	  								   (declare (optimize (speed 3) (safety 0) (debug 0)))
-									   (declare (type ,(type-of vars) ,vars-name))
-									   (declare (type ,(type-of p-vars) ,p-vars-name))									    
+  (let ((scs-function (compile (eval `(defun ,(intern (string (gensym "scs-fun-")) :om) () 
+	  						(declare (optimize (speed 3) (safety 0) (debug 0)))
+						        (declare (type ,(type-of vars) ,vars-name))
+							(declare (type ,(type-of p-vars) ,p-vars-name))									    
 		                                ,scode)))) ;==> COMPILED SOLVER FUNCTION
         (scs-time (list (get-internal-run-time) (get-internal-real-time))))
 
  (print "Timing evaluation of screamer-solver...")
 
-  (let ((solution (funcall scs-function))) ;==> GET THE SOLUTION
+  (let ((solution (select-solution out (funcall scs-function) (if (= 5 val) val nil)))) ;==> GET THE SOLUTION
    (print-scs-time scs-time)
 
    (progn (setf *screamer-valuation* pref-valuation)
-          (cond ((atom solution) solution)
-                ((= val 5) ;==> BEST-VALUE
-                 (x-append (select-solution out (first solution))
-                                  (second solution))) 
-                ((listp out) 
-                 (if (third out) (funcall (third out) solution) solution)) ;==> APPLIES AN OM-FUNCTION TO SOLUTION
-               (t solution)))
+               solution)
 	)
    )			   
   )
@@ -384,7 +410,7 @@
 ; => ADAPTED FROM OMCS AND CLUSTER-ENGINE
 
 (defun make-anon-screamerfun (fn) ;;; OMCS 
-  (eval `(defun ,(gensym) ,.(rest fn))))
+  (eval `(defun ,(gensym "anon-fun-") ,.(rest fn))))
 
 (defun compile-screamer-constraint (fun) ;;;CE
  (let* ((expr (function-lambda-expression fun)))
@@ -398,29 +424,23 @@
 (defun list-of-listp (thing) (and (listp thing) (every #'listp thing)))
 (deftype list-of-lists () '(satisfies list-of-listp))
 
-(defun select-solution (out solution)
+(defun select-solution (out solution &optional valuation)
+ (if valuation
+    (x-append (select-solution out (first solution))
+                     (second solution))
  (cond
-  ((null out) (first solution))
-  ((and (symbolp out) 
-           (equal out :all))
-    solution)
-  ((listp out)
-    (let ((variables 
-           (cond ((null (first out)) nil)
-                     ((atom (first solution)) (first solution))
-                      ((equal (first out) :all) (first solution))
-                      ((listp (first out)) (posn-match (first solution) (first out)))
-                      (t nil)))
-           (p-variables 
-           (cond ((null (second out)) nil)
-                     ((atom (second solution)) (second solution))
-                      ((equal (second out) :all) (second solution))
-                      ((listp (second out)) (posn-match (second solution) (second out)))
-                      (t nil))))
-     (if variables 
-         (if p-variables (list variables p-variables) variables)
-     p-variables)))
-  (t (progn (om-message-dialog "ERROR: the <OUTPUT> should be a symbol :all or nil, or a list with two symbols [ex. (:all nil)] or a list containing two lists of positions [ex. ((0 2) (1 3))]") (om-abort)))))
+  ((null out) solution)
+
+  ((and (listp out) (every #'listp out))
+   (mapcar #'(lambda (s o)
+     (posn-match s o))
+   solution out))
+
+ ((and (listp out) (every #'atom out))
+  (posn-match solution out))
+
+  (t (progn (om-message-dialog "ERROR: the <OUTPUT> should be a list of positions (e.g. '(1 3)) or a list of lists of positions (e.g. '((0 2) (1 3)))") 
+                 (om-abort))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;TIME 
