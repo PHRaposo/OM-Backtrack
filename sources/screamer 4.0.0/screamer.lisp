@@ -3809,67 +3809,67 @@ Otherwise returns the value of X."
       (run-noticers x))))
 
 (defun restrict-bounds! (x lower-bound upper-bound)
-  ;; note: X must be a variable.
-  ;; note: LOWER-BOUND and UPPER-BOUND must be real constants.
-  (when (variable-integer? x)
-    (if lower-bound (setf lower-bound (ceiling lower-bound)))
-    (if upper-bound (setf upper-bound (floor upper-bound))))
-  (if (or (eq (variable-value x) x) (not (variable? (variable-value x))))
-      (let ((run? nil))
-        (when (and lower-bound
-                   (or (not (variable-lower-bound x))
-                       (> lower-bound (variable-lower-bound x))))
-          (if (and (variable-upper-bound x)
-                   (< (variable-upper-bound x) lower-bound))
-              (fail))
-          (when (or (not (variable-lower-bound x))
-                    (not (variable-upper-bound x))
-                    (>= (/ (- lower-bound (variable-lower-bound x))
-                           (- (variable-upper-bound x) (variable-lower-bound x)))
-                        *minimum-shrink-ratio*))
-            (local (setf (variable-lower-bound x) lower-bound))
-            (setf run? t)))
-        (when (and upper-bound
-                   (or (not (variable-upper-bound x))
-                       (< upper-bound (variable-upper-bound x))))
-          (if (and (variable-lower-bound x)
-                   (> (variable-lower-bound x) upper-bound))
-              (fail))
-          (when (or (not (variable-lower-bound x))
-                    (not (variable-upper-bound x))
-                    (>= (/ (- (variable-upper-bound x) upper-bound)
-                           (- (variable-upper-bound x) (variable-lower-bound x)))
-                        *minimum-shrink-ratio*))
-            (local (setf (variable-upper-bound x) upper-bound))
-            (setf run? t)))
-        (when run?
-          (cond ((eq (variable-enumerated-domain x) t)
-                 (if (and (variable-lower-bound x)
-                          (variable-upper-bound x)
-                          (variable-integer? x)
-                          (or (null *maximum-discretization-range*)
-                              (<= (- (variable-upper-bound x)
-                                     (variable-lower-bound x))
-                                  *maximum-discretization-range*)))
-                     (set-enumerated-domain!
-                      x (integers-between
-                         (variable-lower-bound x)
-                         (variable-upper-bound x)))))
-                ((or (and lower-bound
-                          (some #'(lambda (element) (< element lower-bound))
-                                (variable-enumerated-domain x)))
-                     (and upper-bound
-                          (some #'(lambda (element) (> element upper-bound))
-                                (variable-enumerated-domain x))))
-                 ;; note: Could do less consing if had LOCAL DELETE-IF.
-                 ;;       This would also allow checking list only once.
-                 (set-enumerated-domain!
-                  x (remove-if #'(lambda (element)
-                                   (or (and lower-bound (< element lower-bound))
-                                       (and upper-bound (> element upper-bound))))
-                               (variable-enumerated-domain x)))))
-          (run-noticers x)))))
-
+;; note: X must be a variable.
+;; note: LOWER-BOUND and UPPER-BOUND must be real constants.
+(when (variable-integer? x)
+  (if lower-bound (setf lower-bound (ceiling lower-bound)))
+  (if upper-bound (setf upper-bound (floor upper-bound))))
+(if (or (eq (variable-value x) x) (not (variable? (variable-value x))))
+    (let ((run? nil))
+      (when (and lower-bound
+                 (or (not (variable-lower-bound x))
+                     (> lower-bound (variable-lower-bound x))))
+        (if (and (variable-upper-bound x)
+                 (< (variable-upper-bound x) lower-bound))
+            (fail))
+        (when (or (not (variable-lower-bound x))
+                  (not (variable-upper-bound x))
+                  (>= (/ (- lower-bound (variable-lower-bound x))
+                         (- (variable-upper-bound x) (variable-lower-bound x)))
+                      *minimum-shrink-ratio*))
+          (local (setf (variable-lower-bound x) lower-bound))
+          (setf run? t)))
+      (when (and upper-bound
+                 (or (not (variable-upper-bound x))
+                     (< upper-bound (variable-upper-bound x))))
+        (if (and (variable-lower-bound x)
+                 (> (variable-lower-bound x) upper-bound))
+            (fail))
+        (when (or (not (variable-lower-bound x))
+                  (not (variable-upper-bound x))
+                  (>= (/ (- (variable-upper-bound x) upper-bound)
+                         (- (variable-upper-bound x) (variable-lower-bound x)))
+                      *minimum-shrink-ratio*))
+          (local (setf (variable-upper-bound x) upper-bound))
+          (setf run? t)))
+      (when run?
+        (cond ((eq (variable-enumerated-domain x) t)
+               (if (and (variable-lower-bound x)
+                        (variable-upper-bound x)
+                        (variable-integer? x)
+                        (or (null *maximum-discretization-range*)
+                            (<= (- (variable-upper-bound x)
+                                   (variable-lower-bound x))
+                                *maximum-discretization-range*)))
+                   (set-enumerated-domain!
+                    x (integers-between
+                       (variable-lower-bound x)
+                       (variable-upper-bound x)))))
+              ((or (and lower-bound
+                        (some #'(lambda (element) (< element lower-bound))
+                              (variable-enumerated-domain x)))
+                   (and upper-bound
+                        (some #'(lambda (element) (> element upper-bound))
+                              (variable-enumerated-domain x))))
+               ;; note: Could do less consing if had LOCAL DELETE-IF.
+               ;;       This would also allow checking list only once.
+               (set-enumerated-domain!
+                x (remove-if #'(lambda (element)
+                                 (or (and lower-bound (< element lower-bound))
+                                     (and upper-bound (> element upper-bound))))
+                             (variable-enumerated-domain x)))))
+        (run-noticers x)))))
+				
 (defun prune-enumerated-domain (x &optional (enumerated-domain (variable-enumerated-domain x)))
   ;; Returns an enumerated domain from which elements what violate
   ;; restrictions on X have been removed.
@@ -4297,12 +4297,13 @@ Otherwise returns the value of X."
 (defun +-rule-down (z x y)
   ;; note: We can't assert that X and Y are integers when Z is an integer since
   ;;       Z may be an integer when X and Y are Gaussian integers. But we can
-  ;;       make such an assertion if either X or Y is an integer. If the Screamer
-  ;;       type system could distinguish Gaussian integers from other complex
-  ;;       numbers we could make such an assertion whenever either X or Y was
+  ;;       make such an assertion if either X or Y is "an integer" (original: "is real").
+  ;;	   If the Screamer type system could distinguish Gaussian integers from other
+  ;;       complex numbers we could make such an assertion whenever either X or Y was
   ;;       not a Gaussian integer.
   (if (and (variable-integer? z) (or (variable-integer? x) (variable-integer? y))) ;<== from swapneils 
-      (restrict-integer! x))
+ ;(if (and (variable-integer? z) (or (variable-real? x) (variable-real? y)))
+	  (restrict-integer! x))
   ;; note: Ditto.
   (if (and (variable-real? z) (or (variable-real? x) (variable-real? y)))
       (restrict-real! x))
@@ -4389,7 +4390,7 @@ Otherwise returns the value of X."
   ;;       X or Y is real. If the Screamer type system could distinguish
   ;;       Gaussian integers from other complex numbers we could whenever X or
   ;;       Y was not a Gaussian integer.
-  (if (and (or (variable-noninteger? x) (variable-noninteger? y)) ;<== from swapneils 
+  (if (and (or (variable-noninteger? x) (variable-noninteger? y))
            (or (variable-real? x) (variable-real? y)))
       (restrict-noninteger! z))
   (if (and (variable-real? x) (variable-real? y)) (restrict-real! z))
@@ -4428,11 +4429,12 @@ Otherwise returns the value of X."
 (defun *-rule-down (z x y)
   ;; note: We can't assert that X and Y are integers when Z is an integer since
   ;;       Z may be an integer when X and Y are Gaussian integers. But we can
-  ;;       make such an assertion if either X or Y an integer. If the Screamer
-  ;;       type system could distinguish Gaussian integers from other complex
-  ;;       numbers we could make such an assertion whenever either X or Y was
+  ;;       make such an assertion if either X or Y is "an integer" (original: "is real"). 
+  ;;       If the Screamer type system could distinguish Gaussian integers from other
+  ;;       complex numbers we could make such an assertion whenever either X or Y was
   ;;       not a Gaussian integer.
-  (if (and (variable-integer? z) (or (variable-integer? x) (variable-integer? y)))
+  (if (and (variable-integer? z) (or (variable-integer? x) (variable-integer? y))) ;<== fix from swapneils 
+ ;(if (and (variable-integer? z) (or (variable-real? x) (variable-real? y)))
       (restrict-integer! x))
   ;; note: Ditto.
   (if (and (variable-real? z) (or (variable-real? x) (variable-real? y)))
@@ -5982,7 +5984,7 @@ restricted to be consistent with other arguments."
 
 (defun known?-notv-equalv (x y) (one-value (progn (assert!-equalv x y) nil) t))
 
-(defun assert!-notv-equalv (x y)
+(defun assert!-notv-equalv (x y)	 
 ;; note: fix by swapneils
  (cond
    ((known?-equalv x y) (fail))
@@ -5997,16 +5999,15 @@ restricted to be consistent with other arguments."
       (attach-noticer! noticer x)
       (attach-noticer! noticer y)))))
 
-  ;; note: Can be made more efficient so that if you later find out that
-  ;;       X and Y are KNOWN?-NUMBERPV you can then ASSERT!-/=V2.
-  
-  ;(if (known?-equalv x y) (fail))
-  ;(unless (known?-notv-equalv x y)
-  ;  (let ((x (variablize x))
-  ;        (y (variablize y)))
-  ;    (attach-noticer! #'(lambda () (if (known?-equalv x y) (fail))) x)
-  ;    (attach-noticer! #'(lambda () (if (known?-equalv x y) (fail))) y))))
-
+;; note: Can be made more efficient so that if you later find out that
+;;       X and Y are KNOWN?-NUMBERPV you can then ASSERT!-/=V2.
+; (if (known?-equalv x y) (fail))
+; (unless (known?-notv-equalv x y)
+;   (let ((x (variablize x))
+;         (y (variablize y)))
+;     (attach-noticer! #'(lambda () (if (known?-equalv x y) (fail))) x)
+;     (attach-noticer! #'(lambda () (if (known?-equalv x y) (fail))) y))))
+	 
 (defun equalv (x y)
   "Returns T if the aggregate object X is known to equal the aggregate object
 Y, NIL if the aggregate object X is known not to equal the aggregate object Y,
