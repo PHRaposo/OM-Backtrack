@@ -26,6 +26,6 @@ OM-BACKTRACK SCREENSHOT:
 
 ![alt text](https://github.com/PHRaposo/OM-Screamer/blob/main/screenshot.png?raw=true)
 
-# [Download](https://github.com/PHRaposo/OM-Screamer/archive/refs/heads/main.zip)
+# [Download]()
 
 
