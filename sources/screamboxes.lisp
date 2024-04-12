@@ -4,7 +4,7 @@
 
 (in-package :om)
 
-(defclass* screamerboxes (OMBoxCall) () 
+(defclass screamerboxes (OMBoxCall) () 
    (:documentation "Screamer boxes"))
 
 (defmethod screamerboxes-p ((self screamerboxes)) t)

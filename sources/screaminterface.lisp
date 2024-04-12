@@ -99,10 +99,14 @@ width height) nil)
                                           ;:bg-color (om-make-color 0.624 0.624 0.624))
                      (om-make-dialog-item 'om-button (om-make-point 250 5) (om-make-point 62 20) "No" 
                                           :di-action (om-dialog-item-act item
-                                                       (om-return-from-modal-dialog dialog nil)))
+                                                      (let ((item item))
+													   (declare (ignore item))
+													   (om-return-from-modal-dialog dialog nil))))
                      (om-make-dialog-item 'om-button (om-make-point 320 5) (om-make-point 58 18) "Yes" 
                                           :di-action (om-dialog-item-act item
-                                                       (om-return-from-modal-dialog dialog t))
+                                                     (let ((item item))
+													  (declare (ignore item))
+													  (om-return-from-modal-dialog dialog t)))
                                           :default-button t))
 
   (if (scoreeditor-p value) 
