@@ -43,21 +43,24 @@
 	                                          :font *om-default-font3b*)
 	                     (om-make-dialog-item 'om-radio-button (om-make-point 20 pos) (om-make-point 100 80) "One Value" 
 	                                          :di-action (om-dialog-item-act item
-	                                                       (progn (declare (ignore item))
+	                                                       (let ((item item))
+								(declare (ignore item))
 	                                                       (set-pref modulepref :scream-val 0)))
 	                                          :checked-p (= (get-pref modulepref :scream-val) 0)  
 	                                          :radio-button-cluster 'scream-val
 	                                          :font *om-default-font2*)                    
 	                     (om-make-dialog-item 'om-radio-button (om-make-point 120 pos) (om-make-point 100 80) "All Values" 
 	                                          :di-action (om-dialog-item-act item
-	                                                       (progn (declare (ignore item))
+	                                                       (let ((item item))
+								 (declare (ignore item))
 	                                                       (set-pref modulepref :scream-val 1)))
 	                                          :checked-p (= (get-pref modulepref :scream-val) 1)  
 	                                          :radio-button-cluster 'scream-val
 	                                          :font *om-default-font2*)                    
 	                     (om-make-dialog-item 'om-radio-button (om-make-point 220 pos) (om-make-point 100 80) "Listener" 
 	                                          :di-action (om-dialog-item-act item
-	                                                       (progn (declare (ignore item))
+	                                                       (let ((item item))
+								(declare (ignore item))
 	                                                       (set-pref modulepref :scream-val 2)))
 	                                          :checked-p (= (get-pref modulepref :scream-val) 2)  
 	                                          :radio-button-cluster 'scream-val
