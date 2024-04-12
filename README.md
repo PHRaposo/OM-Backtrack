@@ -34,17 +34,17 @@ Adapted to OM 7.2 by Paulo Henrique Raposo and Karim Haddad
 #### The version of SCREAMER that is included here have a few modifications, listed below:
 
 
-#### * Fix for "+-rule-down" and "*-rule-down". [info](https://github.com/nikodemus/screamer/pull/15)
+#### * Fix for "+-rule-down" and "*-rule-down". [more info](https://github.com/nikodemus/screamer/pull/15)
 
 
-#### * Fix bug and CONS in "apply-nondeterministic-nondeterministic". [info](https://github.com/nikodemus/screamer/pull/28)
+#### * Fix bug and CONS in "apply-nondeterministic-nondeterministic". [more info](https://github.com/nikodemus/screamer/pull/28)
 
 
-#### * Changes in "assert!-notv-equalv" by Swapneil Singh. [info](https://github.com/nikodemus/screamer/pull/34/commits/794719d8a9ee60388f9484b7944a1838a35a059c)
+#### * Changes in "assert!-notv-equalv" by Swapneil Singh. [more info](https://github.com/nikodemus/screamer/pull/34/commits/794719d8a9ee60388f9484b7944a1838a35a059c)
 
 
 #### * New version of macro "print-values". This version was included in the original OM-Backtrack and
-####   it's a counterpart of the original macro for adapted to visual programming language.
+####   it's a counterpart of the original macro for visual programming language.
 
 
 #### * New experimental random function: "a-random-member-of".
@@ -55,8 +55,8 @@ ORIGINAL OM-BACKTRACK TUTORIAL PAGE (BY CHARLOTTE TRUCHET): . [http://recherche.
 
 OM-BACKTRACK SCREENSHOT:
 
-![alt text](https://github.com/PHRaposo/OM-Screamer/blob/main/screenshot.png?raw=true)
+![alt text](https://github.com/PHRaposo/OM-Backtrack/blob/main/screenshot.png)
 
-# [Download](https://github.com/PHRaposo/OM-Screamer/archive/refs/heads/main.zip)
+# [Download](https://github.com/PHRaposo/OM-Backtrack/archive/refs/heads/main.zip)
 
 
