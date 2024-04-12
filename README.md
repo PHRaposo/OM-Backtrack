@@ -1,8 +1,10 @@
 # OM-Backtrack
 
 * OM-BACKTRACK is based on the original version for OM 4
+  
    by Gerard Assayag and Augusto Agon
-   Copyright (C) 1997-2003 by IRCAM-Centre Georges Pompidou, Paris, France.
+
+  Copyright (C) 1997-2003 by IRCAM-Centre Georges Pompidou, Paris, France.
 	   
 Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
 	   
