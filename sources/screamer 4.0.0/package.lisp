@@ -39,7 +39,6 @@
            #:necessarily?
            #:all-values
            #:ith-value
-		   #:n-values 
            #:print-values
            #:nondeterministic-function?
            #:funcall-nondeterministic
@@ -106,17 +105,14 @@
            #:apply-substitution
            #:linear-force
            #:divide-and-conquer-force
-		   #:random-force
            #:static-ordering
            #:domain-size
            #:range-size
-		   #:score-order
            #:reorder
            #:solution
            #:best-value
            #:template
            #:define-screamer-package
-		   #:*all-screamer-score-variables*
            #:*screamer-version*
            #:*dynamic-extent?*
            #:*iscream?*
