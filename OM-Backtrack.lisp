@@ -25,7 +25,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 ;; note: Since Screamer is always loaded in OM (from MathTools) I believe it's safe to do this here. 
-(CLRHASH SCREAMER::*FUNCTION-RECORD-TABLE*)
+;(CLRHASH SCREAMER::*FUNCTION-RECORD-TABLE*)
 
 (in-package :om)
 
@@ -33,10 +33,10 @@
 ;Variable definiton with files to load 
 ;--------------------------------------------------
 
-(defvar *screamer-files* nil)
-(setf  *screamer-files* (list	
+(defvar *backtrack-files* nil)
+(setf  *backtrack-files* (list	
                          (om::om-relative-path '("sources" "screamer 4.0.0") "package")
-                         (om::om-relative-path '("sources" "screamer 4.0.0") "screamer")
+                         (om::om-relative-path '("sources" "screamer 4.0.0") "screamer")					 
                          (om::om-relative-path '("sources") "om-preferences")					 						 				 					  
 			             (om::om-relative-path '("sources") "screamboxes")
                          (om::om-relative-path '("sources") "screamfuns")
@@ -47,7 +47,7 @@
 ;--------------------------------------------------
 ;Loading files 
 ;--------------------------------------------------
-(mapc #'compile&load *screamer-files*)
+(mapc #'compile&load *backtrack-files*)
 
 ;--------------------------------------------------
 ;Fill library 
