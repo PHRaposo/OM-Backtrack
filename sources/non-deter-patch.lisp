@@ -32,7 +32,9 @@
         (lispfuns (find-class-boxes boxes 'omboxlispcall)) ;<== OMLISPFUN
         (sub-patches (find-class-boxes boxes 'omboxabspatch)) ;<== OMBOXABSPATCH (SUB PATCHES)
         (non-deter-sub-patch? (not (null (position t (mapcar #'(lambda (x) (non-deter-patch? (reference x))) sub-patches))))))
-  (or screamerboxes (some #'nondeter-omlispfun? lispfuns) non-deter-sub-patch? screamer-valuation-boxes)))
+  (if (or screamerboxes (some #'nondeter-omlispfun? lispfuns) non-deter-sub-patch? screamer-valuation-boxes)
+      t
+      nil)))
 
 (defmethod om-draw-contents :after ((self patch-icon-box))
   (when (non-deter-patch? (reference (object (om-view-container self))))
