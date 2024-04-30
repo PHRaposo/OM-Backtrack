@@ -8,6 +8,9 @@
 ;;;   Copyright (C) 1997-2003 by IRCAM-Centre Georges Pompidou, Paris, France.
 ;;;   Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
 ;;;
+;;;   OM-BACKTRACK VERSION 2.0 is an expansion of the previous version.
+;;;   Copyright (C) 2024 - Paulo Henrique Raposo
+;;;
 ;;;   LISP LIBRARIES:
 ;;;   
 ;;; * SCREAMER 4.0.0
@@ -37,11 +40,12 @@
 (setf  *backtrack-files* (list	
                          (om::om-relative-path '("sources" "screamer 4.0.0") "package")
                          (om::om-relative-path '("sources" "screamer 4.0.0") "screamer")					 
-                         (om::om-relative-path '("sources") "om-preferences")					 						 				 					  
+                         (om::om-relative-path '("sources") "screamer-additions")
+			             (om::om-relative-path '("sources") "fun-button")						 					 						 				 					  
 			             (om::om-relative-path '("sources") "screamboxes")
                          (om::om-relative-path '("sources") "screamfuns")
                          (om::om-relative-path '("sources") "screaminterface")		 					 
-			             (om::om-relative-path '("sources") "non-deter-patch")	 							 
+			             (om::om-relative-path '("sources") "non-deter-patch")								  							 
                           ))
 						 
 ;--------------------------------------------------
@@ -54,19 +58,24 @@
 ;--------------------------------------------------
 
 
-(fill-library '( ("Backtrack" Nil Nil (an-integer-between a-member-of a-random-member-of apply-cont list-of-members-of list-of-random-members-of list-of-integers-between a-chord-in 
-	                                   list-of-chords-in alldiff? growing?) Nil)
-                 ))
+(fill-library '(("primitives" nil nil (either fail) nil)
+				("variables" nil nil (an-integer-between a-member-of a-random-member-of list-of-members-of list-of-random-members-of list-of-integers-between a-chord-in 
+	                                   list-of-chords-in) nil)
+				("constraints" nil nil (apply-cont alldiff? growing?) nil)
+				("valuation" nil nil (one-value all-values print-values ith-value n-values best-value) nil)					
+				("propagation" nil nil (solution static-ordering linear-force divide-and-conquer-force reorder domain-size range-size order) nil)					
+               ))
  				
 (print (format nil "
-OM-BACKTRACK
+OM-BACKTRACK was based on the original version for OM 4
+ by Gerard Assayag and Augusto Agon
+ Copyright (C) 1997-2003 by IRCAM-Centre Georges Pompidou, Paris, France.
+   
+ It was adapted to OM 7.2 by Paulo Henrique Raposo and Karim Haddad
 
-* OM-BACKTRACK is based on the original version for OM 4
-   by Gerard Assayag and Augusto Agon
-   Copyright (C) 1997-2003 by IRCAM-Centre Georges Pompidou, Paris, France.
-	   
-Adapted to OM 7.2 by Paulo Raposo and Karim Haddad
-	   
+* OM-BACKTRACK VERSION 2.0 is an expansion of the previous version.
+  Copyright (C) 2024 - Paulo Henrique Raposo
+   
   LISP LIBRARIES:
  
 * SCREAMER ~A
