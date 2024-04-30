@@ -185,14 +185,3 @@ width height) nil)
 
    (t (if (<= midic-max 8400) 'g 'gg)))))))
 
-(in-package :s)
-(defmacro-compile-time print-values (&body forms)
-  `(catch 'succeed
-     (for-effects
-       (let ((value (progn ,@forms)))         
-         (if (= om::*screamer-valuation* 2)
-           (unless (om::non-determinise-listener value)
-             (throw 'succeed value))
-           (progn (throw 'succeed value) (print value)))))))
-
-(in-package :om)
