@@ -3095,59 +3095,6 @@ either a list or a vector."
              (funcall continuation (aref sequence n))))))
       (t (error "SEQUENCE must be a sequence")))))
 
-;;; note: The following random functions was included for Openmusic (phraposo)
-;;; for experimental purposes on music constraints.
-
-(cl:defun permut-random (input)
-"Returns a random permutation of input."
- (labels
-  ((takeout (i list)
-    (cond ((= i 0) (subseq list 1 (length list)))
-          ((= i (1- (length list))) (butlast list))
-          (t (append
-              (subseq list 0 i)
-              (subseq list (1+ i) (length list)))))))
- (let ((list (copy-seq input))
-      (r nil))
-   (loop for i from 0 while (< i (length input)) do
-        (unless (= 0 (length list))
-          (let ((j (random (length list))))
-            (push (elt list j) r)
-            (setf list (takeout j list)))))
-   r)))
-
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (screamer::declare-nondeterministic 'a-random-member-of))
-
-(cl:defun a-random-member-of (sequence)
-  "Nondeterministically returns an random element of SEQUENCE. The SEQUENCE must be
-either a list or a vector."
-  (declare (ignore sequence))
-  (screamer::screamer-error
-   "A-RANDOM-MEMBER-OF is a nondeterministic function. As such, it must be called~%~
-   only from a nondeterministic context."))
-
-(cl:defun a-random-member-of-nondeterministic (continuation sequence)
-(let ((sequence (permut-random (value-of sequence))))
-  (cond
-    ((listp sequence)
-     (unless (null sequence)
-       (screamer::choice-point-external
-        (loop (if (null (rest sequence)) (return))
-          (screamer::choice-point-internal (funcall continuation (first sequence)))
-          (setf sequence (value-of (rest sequence)))))
-       (funcall continuation (first sequence))))
-    ((vectorp sequence)
-     (let ((n (length sequence)))
-       (unless (zerop n)
-         (let ((n (1- n)))
-           (choice-point-external
-            (dotimes (i n)
-              (choice-point-internal (funcall continuation (aref sequence i)))))
-           (funcall continuation (aref sequence n))))))
-    (t (error "SEQUENCE must be a sequence")))))
-
 ;;; note: The following two functions work only when Screamer is running under
 ;;;       ILisp/GNUEmacs with iscream.el loaded.
 
