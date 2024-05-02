@@ -451,21 +451,24 @@ Copyright (c) 2007, Kilian Sprotte. All rights reserved."
  :icon 486
  (screamer::range-size x))
 
-(defmethod! order ((symb-fn symbol))
+(defmethod! order ((symb-fn t))
  :initvals '('>)
  :indoc '("symbol or string")
  :doc "Order argument for SCREAMER::REORDER = > (descending) or < (ascending)." 
- :menuins '((0 (('> '>) ('< '<))))
+ ;:menuins '((0 (('> '>) ('< '<))))
  :icon 486
- (eval `(function ,(if (stringp symb-fn) (read-from-string symb-fn) symb-fn))))
+ (eval `(function ,(cond ((stringp symb-fn) (read-from-string symb-fn))
+			 ((symbolp symb-fn) symb-fn)
+			  (t (progn (om-message-dialog "The ORDER argument should be a symbol or string.")
+				    (om-abort)))))))
 
-(defmethod! order ((symb-fn string))
- :initvals '(">")
- :indoc '("symbol or string")
- :doc "Order argument for SCREAMER::REORDER = > (descending) or < (ascending)." 
- :menuins '((0 ((">" '>) ("<" '<))))
- :icon 486
- (eval `(function ,(if (stringp symb-fn) (read-from-string symb-fn) symb-fn))))
+;(defmethod! order ((symb-fn string))
+; :initvals '(">")
+; :indoc '("symbol or string")
+; :doc "Order argument for SCREAMER::REORDER = > (descending) or < (ascending)." 
+; :menuins '((0 ((">" '>) ("<" '<))))
+; :icon 486
+; (eval `(function ,(if (stringp symb-fn) (read-from-string symb-fn) symb-fn))))
     
 ;(setf *screamer-package* (omNG-protect-object (omNG-make-new-package "Backtrack")))
 
