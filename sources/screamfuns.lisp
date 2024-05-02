@@ -452,16 +452,16 @@ Copyright (c) 2007, Kilian Sprotte. All rights reserved."
  (screamer::range-size x))
 
 (defmethod! order ((symb-fn symbol))
- :initvals '(">")
- :indoc '("string")
+ :initvals '('>)
+ :indoc '("symbol or string")
  :doc "Order argument for SCREAMER::REORDER = > (descending) or < (ascending)." 
- :menuins '((0 ((">" '>) ("<" '<))))
+ :menuins '((0 (('> '>) ('< '<))))
  :icon 486
  (eval `(function ,(if (stringp symb-fn) (read-from-string symb-fn) symb-fn))))
 
 (defmethod! order ((symb-fn string))
  :initvals '(">")
- :indoc '("string")
+ :indoc '("symbol or string")
  :doc "Order argument for SCREAMER::REORDER = > (descending) or < (ascending)." 
  :menuins '((0 ((">" '>) ("<" '<))))
  :icon 486
