@@ -156,20 +156,26 @@
            (equal (allow-lock self) "o")  
            (and (equal (allow-lock self) "x") (value self)) 
            (and (equal (allow-lock self) "&") (ev-once-p self))) (call-next-method))
-      (t (let* ((theinputs (loop for i in (inputs self) ;<=== FROM OMOut (gen-code method -> in-out-boxes.lisp)
-	                                 collect (connected? i)))
-				(code (loop for box in theinputs
-				            collect (if box (gen-code (first box) (second box)) 'nil)))					   					 
-	            (qargs (loop for val in code collect (if (or (symbolp val) (omlistp val)) `',val val)))
-				(oldletlist *let-list*)
-			    (themethod (compute-applicable-methods (fdefinition (reference self)) qargs)) form rep)
+      (t (let ((theinputs (loop for i in (inputs self) ;<=== FROM OMOut (gen-code method -> in-out-boxes.lisp)
+	                        collect (connected? i)))
+	      (oldletlist *let-list*)
+	       themethod code qargs form rep)
+	  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+	  (setf *let-list* nil) ;<=== TEST (RESET *LET-LIST* BEFORE CODE GNERATION)
+				
+	  (setf code (loop for box in theinputs
+			   collect (if box (gen-code (first box) (second box)) 'nil)))			
+		   					 
+	  (setf qargs (loop for val in code collect (if (or (symbolp val) (omlistp val)) `',val val)))
+				
+	  (setf themethod (compute-applicable-methods (fdefinition (reference self)) qargs))
+	;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 	            (if (null themethod)
 	                (progn (dialog-message (string+ "no method is defined for inputs in box " (name self)))
 	                       (abort))
                     (progn
                      (when (and (EditorFrame (car themethod)) (not (compiled? (car themethod))))
                       (modify-genfun (EditorFrame (car themethod))))
-	  				;(setf *let-list* nil) <=== ???
 					(setf form (let ((valuation (string (reference self))))
 					            (cond ((or (equal valuation "ALL-VALUES") 
 									       (equal valuation "ONE-VALUE"))
