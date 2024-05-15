@@ -39,12 +39,11 @@
 (defvar *backtrack-files* nil)
 (setf  *backtrack-files* (list	
                          (om::om-relative-path '("sources" "screamer 4.0.0") "package")
-                         (om::om-relative-path '("sources" "screamer 4.0.0") "screamer")					 
-                         (om::om-relative-path '("sources") "screamer-additions")
-			             (om::om-relative-path '("sources") "fun-button")						 					 						 				 					  
+                         (om::om-relative-path '("sources" "screamer 4.0.0") "screamer")
+                         (om::om-relative-path '("sources") "screaminterface") 					 
+                         (om::om-relative-path '("sources") "screamer-additions")						 					 						 				 					  
 			             (om::om-relative-path '("sources") "screamboxes")
-                         (om::om-relative-path '("sources") "screamfuns")
-                         (om::om-relative-path '("sources") "screaminterface")		 					 
+                         (om::om-relative-path '("sources") "screamfuns")		 					 
 			             (om::om-relative-path '("sources") "non-deter-patch")								  							 
                           ))
 						 
@@ -61,9 +60,8 @@
 (fill-library '(("primitives" nil nil (either fail) nil)
 				("variables" nil nil (an-integer-between a-member-of a-random-member-of list-of-members-of list-of-random-members-of list-of-integers-between a-chord-in 
 	                                   list-of-chords-in) nil)
-				("constraints" nil nil (apply-cont alldiff? growing?) nil)
-				("valuation" nil nil (one-value all-values print-values ith-value n-values best-value) nil)					
-				("propagation" nil nil (solution static-ordering linear-force divide-and-conquer-force reorder domain-size range-size order) nil)					
+				("constraints" nil nil (apply-cont assert! alldiff? growing?) nil)
+				("valuation" nil nil (one-value all-values print-values ith-value n-values possibly? necessarily?) nil)					
                ))
  				
 (print (format nil "

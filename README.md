@@ -27,19 +27,14 @@ Adapted to OM 7.2 by Paulo Henrique Raposo and Karim Haddad
  -> NONDETERMINISTIC PATCHES WAS COMPLETED REVISED AND NOW SUPPORTS LISP FUNCTIONS, LISP PATCHES AND SUB PATCHES;
  
  
- -> ADDED LOCAL EVALUATIONS: ONE-VALUE, ALL-VALUES, PRINT-VALUES, ITH-VALUE, N-VALUES AND BEST-VALUE;
- 
- 
- -> ADDED SOLUTION, STATIC-ORDERING, LINEAR-FORCE, DIVIDE-AND-CONQUER-FORCE, ORDER, DOMAIN-SIZE AND RANGE-SZE METHODS;
- 
- 
- -> ADDED NEW LOCK-BUTTON (FUNCTION BUTTON - SHORTCUT "#") FOR REORDER ARGUMENTS. 
- 
- 
- OBS: THE FILE "170.tif", INCLUDED IN THE "RESOURCES/BUTTON" FOLDER OF THIS LIBRARY, SHOULD BE PLACED IN THE "RESOURCES/ICON" FOLDER INSIDE OPENMUSIC APPLICATION FOLDER.
-  
+ -> ADDED LOCAL EVALUATIONS: ONE-VALUE, ALL-VALUES, PRINT-VALUES, ITH-VALUE, N-VALUES, POSSIBLY? AND NECESSARILY?;
 
 
+ -> NEW METHODS: EITHER, FAIL, ASSERT!, APPLY-NONDETERMINISTIC AND FUNCALL-NONDETERMINISTIC;
+
+ -> NEW TUTORIAL PATCHES BASED ON ORIGINAL PAPERS BY SCREAMER'S AUTHORS.
+ 
+   
   LISP LIBRARIES:
 
 
@@ -53,8 +48,6 @@ Adapted to OM 7.2 by Paulo Henrique Raposo and Karim Haddad
 
 #### OM-Backtrack is an adaptation of the backtrack part of SCREAMER
 #### to the paradigm of visual programming language of Openmusic.
-#### The version 2.0 includes a new support for the propagation part of SCREAMER (constraint package).
-
 
 #### SCREAMER is an extension of Common Lisp that adds support for nondeterministic
 #### programming. Screamer consists of two levels. The basic nondeterministic level
@@ -70,20 +63,20 @@ Adapted to OM 7.2 by Paulo Henrique Raposo and Karim Haddad
 #### The version of SCREAMER that is included here have a few modifications, listed below:
 
 
-#### * Fix for "+-rule-down" and "*-rule-down". [info](https://github.com/nikodemus/screamer/pull/15)
+#### - Fix for "+-rule-down" and "*-rule-down". [info](https://github.com/nikodemus/screamer/pull/15)
 
 
-#### * Fix bug and CONS in "apply-nondeterministic-nondeterministic". [info](https://github.com/nikodemus/screamer/pull/28)
+####  - Fix bug and CONS in "apply-nondeterministic-nondeterministic". [info](https://github.com/nikodemus/screamer/pull/28)
 
 
-#### * Changes in "assert!-notv-equalv" by Swapneil Singh. [info](https://github.com/nikodemus/screamer/pull/34/commits/794719d8a9ee60388f9484b7944a1838a35a059c)
+####  - Changes in "assert!-notv-equalv" by Swapneil Singh. [info](https://github.com/nikodemus/screamer/pull/34/commits/794719d8a9ee60388f9484b7944a1838a35a059c)
 
 
-#### * New version of macro "print-values". This version was included in the original OM-Backtrack and
-####   it's a counterpart of the original macro for adapted to visual programming language.
+####  - New version of macro "print-values". This version was included in the original OM-Backtrack and
+####   it's a counterpart of the original macro for adapted to OM.
 
 
-#### * New experimental random function: "a-random-member-of".
+####  - New experimental random function: "a-random-member-of".
 
 
 ORIGINAL OM-BACKTRACK TUTORIAL PAGE (BY CHARLOTTE TRUCHET): . [http://recherche.ircam.fr/equipes/repmus/OpenMusic/user-doc/DocFiles/backtrackTutorial/ ](http://recherche.ircam.fr/equipes/repmus/OpenMusic/user-doc/DocFiles/backtrackTutorial/)
@@ -91,8 +84,8 @@ ORIGINAL OM-BACKTRACK TUTORIAL PAGE (BY CHARLOTTE TRUCHET): . [http://recherche.
 
 OM-BACKTRACK SCREENSHOT:
 
-![alt text](https://github.com/PHRaposo/OM-Backtrack/blob/c20a19bb8a03340433fa4e4e7b513397c52707b3/ais-screenshot.png)
+![alt text](https://github.com/PHRaposo/OM-Backtrack/blob/main/screenshot.png)
 
-# [Download](https://github.com/PHRaposo/OM-Backtrack/archive/refs/heads/V2.0.zip)
+# [Download]()
 
 
