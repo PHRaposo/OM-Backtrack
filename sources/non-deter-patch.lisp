@@ -32,9 +32,9 @@
         (lispfuns (find-class-boxes boxes 'omboxlispcall)) ;<== OMLISPFUN
         (sub-patches (find-class-boxes boxes 'omboxabspatch)) ;<== OMBOXABSPATCH (SUB PATCHES)
         (non-deter-sub-patch? (not (null (position t (mapcar #'(lambda (x) (non-deter-patch? (reference x))) sub-patches))))))
-  (if (or screamerboxes (some #'nondeter-omlispfun? lispfuns) non-deter-sub-patch? screamer-valuation-boxes)
-      t
-      nil)))
+  (if (or screamerboxes (some #'nondeter-omlispfun? lispfuns) non-deter-sub-patch? screamer-valuation-boxes) 
+       t
+       nil)))
 
 (defmethod om-draw-contents :after ((self patch-icon-box))
   (when (non-deter-patch? (reference (object (om-view-container self))))
@@ -58,10 +58,10 @@
    (cond
 	   	   	           
    ;((and (equal (allow-lock self) "l") ;<== TEST
-   ;	     (non-deter-patch? (reference self)))		 	 		 	 
-   ;	      (om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
-   ;           (clear-after-error self)
-   ;           (om-abort))	
+   	;     (non-deter-patch? (reference self)))		 	 		 	 
+   	 ;     (om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
+      ;        (clear-after-error self)
+       ;       (om-abort))	
 				  				             				 	 			
     ((and (equal (allow-lock self) "x") (value self))
      (nth num-out (value self)))	 
@@ -125,15 +125,32 @@
 	   (out-symb (code self))
 	   (oldletlist *let-list*)
 	   (oldlambdacontext *lambda-context*)		 
-	  symbols body)
+	  symbols nondeterministic-context? body)
 	  (setf out-box (list+ temp-out-box (sort out-box '< :key 'indice)))
 	  (setf in-boxes (list+ self-boxes (sort in-boxes '< :key 'indice)))
 	  (setf symbols (mapcar #'(lambda (thein) (setf (in-symbol thein) (gensym))) in-boxes))
 	  (setf *let-list* nil)	 
 	  (cond ((non-deter-patch? self)
-	         (setf body `(values ,.(mapcar #'(lambda (theout) (gen-code theout 0)) out-box)))
-	  	  	 (eval `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
-	  	  	     	(let* ,(reverse *let-list*) ,body))))												   													   
+;>========== *LET-LIST* IN NONDETERMINISTIC CONTEXTS - MULTIPLE OUTPUTS ==========<; 
+		     (setf body `(values ,.(mapcar #'(lambda (theout)
+                                                                       (let ((theinputs (loop for i in (inputs theout)
+	                                                                                                collect (connected? i))))    
+                                                                       (if (screamer-valuation-boxes-p (caar theinputs))
+                                                                           (progn (setf nondeterministic-context? t)
+                                                                                      (gen-valuation-code (caar theinputs) (cadar theinputs)))
+                                                                           (gen-code theout 0))))
+                                                        out-box)))
+				;(print `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
+		  		;   ,body)) ;<== CHECK CODE
+		     (if nondeterministic-context? 
+                        (eval `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
+		  		   ,body)) 
+                        (eval `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
+		  		   (let* ,(reverse *let-list*) ,body))))) 
+	         ;(setf body `(values ,.(mapcar #'(lambda (theout) (gen-code theout 0)) out-box)))
+	  	 ; 	 (eval `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
+	  	 ; 	     	(let* ,(reverse *let-list*) ,body))))	
+;>==============================================================================<; 											   													   
   		    (t (setf body `(values ,.(mapcar #'(lambda (theout)
   					               (gen-code theout 0)) out-box)))					   
   			   (eval `(defun ,(intern (string out-symb) :om)  (,.symbols)
@@ -163,15 +180,26 @@
 	   (out-symb (code patch-clone))
 	   (oldletlist *let-list*)
 	   (oldlambdacontext *lambda-context*)		 
-	  symbols body patch-code)
+	  symbols body nondeterministic-context? patch-code)
 	  (setf out-box (list+ temp-out-box (sort out-box '< :key 'indice)))
 	  (setf in-boxes (list+ self-boxes (sort in-boxes '< :key 'indice)))
 	  (setf symbols (mapcar #'(lambda (thein) (setf (in-symbol thein) (gensym))) in-boxes))
 	  (setf *let-list* nil) 
 	  (cond ((non-deter-patch? self) 
-		     (setf body `(values ,.(mapcar #'(lambda (theout) (gen-code theout 0)) out-box)))
-		     (setf patch-code `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
-		  		  	     	    (let* ,(reverse *let-list*) ,body))))
+		     (setf body `(values ,.(mapcar #'(lambda (theout)
+                                                                       (let ((theinputs (loop for i in (inputs theout)
+	                                                                                                collect (connected? i))))
+                                                                        
+                                                                       (if (screamer-valuation-boxes-p (caar theinputs))
+                                                                           (progn (setf nondeterministic-context? t)
+                                                                                      (gen-valuation-code (caar theinputs) (cadar theinputs)))
+                                                                           (gen-code theout 0))))
+                                                        out-box)))
+		     (setf patch-code (if nondeterministic-context? 
+                                                   `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
+		  		  	     	     ,body)
+                                                  `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
+		  		  	     	    (let* ,(reverse *let-list*) ,body)))))
 								
   		    (t (setf body `(values ,.(mapcar #'(lambda (theout)
   					               (gen-code theout 0)) out-box)))					   
@@ -194,9 +222,51 @@
           (eval `(defun ,(intern (string (code patch)) :om)
                   ,.(cdr (get-lisp-exp (lisp-exp patch))))))
     (eval `(defun ,(intern (string (code patch)) :om) () nil))))
-	
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;Evaluation
+(defmethod special-lambda-value ((self OMBoxPatch) symbol)
+   "Eval a box in lambda mode."
+   (if (non-deter-patch? (reference self))
+       (multiple-value-bind (nesymbs args) (get-args-eval-currry self)
+        (eval `#'(lambda ,(reverse nesymbs)
+                  (,symbol ,.args))))	   
+	(call-next-method)
+ ))
+ 
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;code generation
+
+(defmethod curry-lambda-code ((self OMBoxPatch) symbol)
+   "Lisp code generetion for a box in lambda mode."
+ (if (non-deter-patch? (reference self))
+   (let ((nesymbs nil)
+         (oldlambdacontext *lambda-context*))
+     (setf *lambda-context* t)
+ 
+     (unwind-protect 
+         (let ((args (mapcan #'(lambda (input)
+                                 (let ((a (if (connected? input)
+                                              (gen-code input 0)
+                                            (let ((newsymbol (gensym)))
+                                              (push newsymbol nesymbs)
+                                              newsymbol))))
+                                   (if (keyword-input-p input) 
+                                       (list (value input) a) 
+                                     (list a))))
+                             (inputs self))))
+           `#'(lambda ,(reverse nesymbs)
+                (,symbol ,.args)))
+   
+       (setf *lambda-context* oldlambdacontext)
+   
+       ))
+  (call-next-method)
+ ))
+	   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
 ;;;TODO (IF NEEDED)
 ;;; 
 ;;; => OMLOOP (???)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
