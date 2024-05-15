@@ -1,16 +1,15 @@
 TODO 
 
 ;===============================================================;
-;=> OM-BACKTRACK
+;=> OM-BACKTRACK V. 2.0
 ;===============================================================;
 
 - FIX LISTENER (RESIZE POLY - MULTI-SEQ)
-- FIX LISTENER STAFFSYS (CLEFS FROM MIDICS -> POLY - MULTI-SEQ)
 - FIX LAMBDA - NONDETERMINISTIC PATCHES
-- FIX OMLISPPATCH CONFLICT
 - NONDETERMINISTIC OMLOOP ?
 - OMNG-COPY? SCREAMERBOXES (?)
-
+- FOR-EFFECTS / LOCAL / GLOBAL
+- DOLIST / DOTIMES (?)
 ;===============================================================;
 
 
