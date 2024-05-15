@@ -1,6 +1,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; REVISED VERSION
 ;;; Copyright 2024 PAULO HENRIQUE RAPOSO AND KARIM HADDAD
+;;;
+;;; NEW FUNCTINS AND METHODS OF VERSION 2.0:
+;;;
+;;; - A-RANDOM-MEMBER-OF / LIST-OF-RANDOM-MEMBERS-OF
+;;;  
+;;; - EITHER / FAIL / ALL-VALUES / ONE-VALUES / PRINT-VALUES
+;;; ITH-VALUE / N-VALUES / POSSIBLY? / NECESSARILY?
+;;; 
+;;; - IN-PROGRESS: FOR-EFFECTS / LOCAL / GLOBAL
+;;;
 
 (in-package :s)
 
@@ -81,6 +91,19 @@
              (list (a-chord-in (car l) dom)))
             (list-of-chords-in-lcont (cdr l) dom conts))))
 
+; DISABLED FOR NOW
+#|
+(defun assert!-rec (x);same as assert!-all from OM? 
+(if (null x) nil
+	(if (atom x) (assert! x)
+		(if (and (listp x) (every #'atom x))
+		    (progn (assert! (car x))
+		           (assert!-rec (cdr x)))
+			(if (and (listp x) (every #'listp x))
+			    (progn (assert!-rec (car (car x)))
+				       (assert!-rec (cdr x))))))))
+|#		
+			   
 (in-package :om)
 
 (defmethod get-real-funname ((self t)) self)
@@ -96,10 +119,9 @@ Inputs :
 low : integer, minimum of the possible values for the variable
 high : integer, maximum of the possible values for the variable
 
-
 Output:
 an integer between low and high. The value depends on the backtracking caused by the constraints
-" 
+"
    :icon 486 
    (s:an-integer-between low high))
 
@@ -133,7 +155,7 @@ Output:
 a value of the list. The value depends on the backtracking caused by the constraints
 "
  :icon 486
- (s:a-random-member-of lst))
+ (s::a-random-member-of lst))
  
 (defun appc (fun variables)
   (apply 
@@ -305,7 +327,7 @@ Output : t if the list is growing
   (croissante l))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;; NEW FUNCTIONS ===> OM-BACKTRACK 2.0
+;;; NEW METHODS ===> OM-BACKTRACK 2.0 - PHRAPOSO
 
 (defmethod get-boxcallclass-fun ((self (eql 'either))) 'screamerboxes)
 (defmethod get-real-funname ((self (eql 'either))) self)
@@ -323,15 +345,62 @@ Output : t if the list is growing
   :icon 486 
   (screamer::fail))
 
-#|(defmethod get-boxcallclass-fun ((self (eql 'apply-nondeterministic))) 'screamerboxes)
+(defmethod get-boxcallclass-fun ((self (eql 'apply-nondeterministic))) 'screamerboxes)
 (defmethod get-real-funname ((self (eql 'apply-nondeterministic))) self)
-(defmethod! apply-nondeterministic  ((fun function) (var t))
+(defmethod! apply-nondeterministic  ((fun function) &rest arguments)
   :initvals '(nil nil)
   :indoc '("lambda function" "variables")
   :doc "OM equivalent of SCREAMER::APPLY-NONDETERMINISTIC." 
   :icon 486 
-  (screamer::apply-nondeterministic fun (list var)))|#
+  (screamer::apply-nondeterministic fun arguments))
 
+(defmethod get-boxcallclass-fun ((self (eql 'funcall-nondeterministic ))) 'screamerboxes)
+(defmethod get-real-funname ((self (eql 'funcall-nondeterministic ))) self)
+(defmethod! funcall-nondeterministic  ((fun function) &rest arguments)
+  :initvals '(nil nil)
+  :indoc '("lambda function" "variables")
+  :doc "OM equivalent of SCREAMER::FUNCALL-NONDETERMINISTIC." 
+  :icon 486 
+  (screamer::funcall-nondeterministic fun arguments))
+
+;; TODO: FOR-EFFECTS / LOCAL / GLOBAL
+(defmethod get-boxcallclass-fun ((self (eql 'for-effects))) 'screamer-valuation-boxes)
+(defmethod get-real-funname ((self (eql 'for-effects))) self)
+(defmethod! for-effects (&rest forms)
+:initvals '(nil)
+:indoc '("forms" "environment")
+:doc "OM equivalent of SCREAMER::FOR-EFFECTS macro." 
+:icon 486 
+(screamer::for-effects forms))
+
+(defmethod get-boxcallclass-fun ((self (eql 'local))) 'screamerboxes)
+(defmethod get-real-funname ((self (eql 'local))) self)
+(defmethod! local (&rest body)
+:initvals '(nil)
+:indoc '("body")
+:doc "OM equivalent of SCREAMER::LOCAL macro." 
+:icon 486 
+(screamer::local body))
+
+(defmethod get-boxcallclass-fun ((self (eql 'global))) 'screamerboxes)
+(defmethod get-real-funname ((self (eql 'global))) self)
+(defmethod! global (&rest body)
+:initvals '(nil)
+:indoc '("body")
+:doc "OM equivalent of SCREAMER::GLOBAL macro." 
+:icon 486 
+(screamer::global body))
+
+(defmethod! assert! ((x t))
+:initvals '(nil)
+:indoc '("boolean")
+:doc "OM equivalent of SCREAMER::ASSERT! macro." 
+:icon 486 
+(screamer::assert! x))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; SCREAMER VALUATION METHODS
+	  
 (defmethod get-boxcallclass-fun ((self (eql 'one-value))) 'screamer-valuation-boxes)
 (defmethod get-real-funname ((self (eql 'one-value))) self)
 (defmethod! one-value ((expression t) &optional (default-expression '(screamer::fail)))
@@ -367,15 +436,6 @@ Output : t if the list is growing
 :doc "OM verion of SCREAMER:ITH-VALUE macro." 
 :icon 486 
 (screamer::ith-value i forms default-expression))	
-	
-(defmethod get-boxcallclass-fun ((self (eql 'best-value))) 'screamer-valuation-boxes)
-(defmethod get-real-funname ((self (eql 'best-value))) self)
-(defmethod! best-value ((form1 t) (objective-form t) &optional (form2? nil))
-:initvals '(nil nil nil)
-:indoc '("integer" "forms" "fail")
-:doc "OM equivalent of SCREAMER:BEST-VALUE macro." 
-:icon 486 
-(screamer::best-value form1 objective-form form2?))	
 
 (defmethod get-boxcallclass-fun ((self (eql 'n-values))) 'screamer-valuation-boxes)
 (defmethod get-real-funname ((self (eql 'n-values))) self)
@@ -388,90 +448,21 @@ Copyright (c) 2007, Kilian Sprotte. All rights reserved."
 :icon 486 
 (screamer::n-values n forms))
 
-(defmethod get-boxcallclass-fun ((self (eql 'solution))) 'screamerboxes)
-(defmethod get-real-funname ((self (eql 'solution))) self)
-(defmethod! solution ((x t) (force-function t))
-:initvals '(nil nil)
-:indoc '("X" "ordering force function")
-:doc "OM version of SCREAMER:SOLUTION." 
-:icon 486 
-(screamer::solution x force-function))
-
-(defmethod get-boxcallclass-fun ((self (eql 'static-ordering))) 'screamer-ordering-boxes)
-(defmethod get-real-funname ((self (eql 'static-ordering))) self)
-(defmethod! static-ordering ((force-function t))
+(defmethod get-boxcallclass-fun ((self (eql 'possibly?))) 'screamer-valuation-boxes)
+(defmethod get-real-funname ((self (eql 'possibly?))) self)
+(defmethod! possibly?  ((expressions t))
 :initvals '(nil)
-:indoc '("force function")
-:doc "OM version of SCREAMER:STATIC-ORDERING." 
+:indoc '("expressions")
+:doc "OM equivalent of SCREAMER::POSSIBLY? macro." 
 :icon 486 
-(screamer::static-ordering force-function))
+(screamer::possibly? expressions))
 
-(defmethod get-boxcallclass-fun ((self (eql 'linear-force))) 'screamer-force-function-boxes)
-(defmethod get-real-funname ((self (eql 'linear-force))) self)
-(defmethod! linear-force ((variable t))
- :initvals '(nil t)
- :indoc '("variable")
- :doc "OM version of SCREAMER:LINEAR-FORCE." 
- :icon 486 
- (screamer::linear-force variable))
+(defmethod get-boxcallclass-fun ((self (eql 'necessarily?))) 'screamer-valuation-boxes)
+(defmethod get-real-funname ((self (eql 'necessarily?))) self)
+(defmethod! necessarily?  ((expressions t))
+:initvals '(nil)
+:indoc '("expressions")
+:doc "OM equivalent of SCREAMER::NECESSARILY? macro." 
+:icon 486 
+(screamer::necessarily? expressions))
 
-(defmethod get-boxcallclass-fun ((self (eql 'divide-and-conquer-force))) 'screamer-force-function-boxes)
-(defmethod get-real-funname ((self (eql 'divide-and-conquer-force))) self)
-(defmethod! divide-and-conquer-force ((variable t))
- :initvals '(nil t)
- :indoc '("variable")
- :doc "OM version of SCREAMER:LINEAR-FORCE." 
- :icon 486
- (screamer::divide-and-conquer-force variable))
-
-(defmethod get-boxcallclass-fun ((self (eql 'reorder))) 'screamer-ordering-boxes)
-(defmethod get-real-funname ((self (eql 'reorder))) self)
-(defmethod! reorder ((cost-function t) (terminate? t ) (order t) (force-function t))
- :initvals '(nil nil nil nil)
- :indoc '("cost-function" "terminate?" "order" "force-function")
- :doc "OM version of SCREAMER:LINEAR-FORCE." 
- :icon 486
- (screamer::reorder cost-function terminate? order force-function))
-
-(defmethod get-boxcallclass-fun ((self (eql 'domain-size))) 'screamer-force-function-boxes)
-(defmethod get-real-funname ((self (eql 'domain-size))) self)
-(defmethod! domain-size ((x t))
- :initvals '(nil)
- :indoc '("X")
- :doc "OM version of SCREAMER:DOMAIN-SIZE." 
- :icon 486
- (screamer::domain-size x))
-
-(defmethod get-boxcallclass-fun ((self (eql 'range-size))) 'screamer-force-function-boxes)
-(defmethod get-real-funname ((self (eql 'range-size))) self)
-(defmethod! range-size ((x t))
- :initvals '(nil)
- :indoc '("X")
- :doc "OM version of SCREAMER:DOMAIN-SIZE." 
- :icon 486
- (screamer::range-size x))
-
-(defmethod! order ((symb-fn t))
- :initvals '('>)
- :indoc '("symbol or string")
- :doc "Order argument for SCREAMER::REORDER = > (descending) or < (ascending)." 
- ;:menuins '((0 (('> '>) ('< '<))))
- :icon 486
- (eval `(function ,(cond ((stringp symb-fn) (read-from-string symb-fn))
-			 ((symbolp symb-fn) symb-fn)
-			  (t (progn (om-message-dialog "The ORDER argument should be a symbol or string.")
-				    (om-abort)))))))
-
-;(defmethod! order ((symb-fn string))
-; :initvals '(">")
-; :indoc '("symbol or string")
-; :doc "Order argument for SCREAMER::REORDER = > (descending) or < (ascending)." 
-; :menuins '((0 ((">" '>) ("<" '<))))
-; :icon 486
-; (eval `(function ,(if (stringp symb-fn) (read-from-string symb-fn) symb-fn))))
-    
-;(setf *screamer-package* (omNG-protect-object (omNG-make-new-package "Backtrack")))
-
-;(AddPackage2Pack *screamer-package* *constraint-package*)
-
-;(AddGenFun2Pack '(an-integer-between  a-member-of  apply-cont list-of-members-of list-of-integers-between  a-chord-in  list-of-chords-in  alldiff? growing? ) *screamer-package*)

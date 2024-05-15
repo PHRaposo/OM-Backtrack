@@ -67,25 +67,12 @@ width height) nil)
                               (mapc #'(lambda (frame)
                                         (omG-add-element (panel editor) frame)) slot-boxes)
                               editor))))))
-           (t ;(setf dialog (om-make-window 'om-dialog  
-		;			   :window-title "Non Deterministic Listener" 
-			;		   :size (om-make-point 400 200) 
-                          ;                 :position :centered))  
-	     (setf dialog (om-make-window 'non-deter-window 
+           (t (setf dialog (om-make-window 'non-deter-window 
                                            :window-title "Non Deterministic Listener"
                                            :position :centered 
                                            :window-show nil
                                            :size (om-make-point 600 400) 
-                                           ;:font (om-make-font "Arial" 12 :mode :srcor :style :plain)
-                                           :bg-color (om-make-color 0.875 0.875 0.875)))
-	      ;(om-make-dialog-item 'om-text-edit-view
-            ;                       (om-make-point 25 35) (om-make-point 550 350)
-              ;                     (format nil "~D" value)
-                ;                   :font *om-default-font2* 
-                  ;                 :bg-color *om-white-color*  
-                    ;               :scrollbars :v 
-                      ;             :wrap-p t
-                        ;           :save-buffer-p t)))) 	      
+                                           :bg-color (om-make-color 0.875 0.875 0.875)))	      
               (om-make-view 'om-text-edit-view
                             :save-buffer-p t
                             :scrollbars :v
@@ -96,7 +83,7 @@ width height) nil)
 
     (om-add-subviews dialog value-item-view  
                      (om-make-dialog-item 'om-static-text (om-make-point 25 10) (om-make-point 420 20) "DO YOU WANT ANOTHER SOLUTION?")
-                                          ;:bg-color (om-make-color 0.624 0.624 0.624))
+					 
                      (om-make-dialog-item 'om-button (om-make-point 250 5) (om-make-point 62 20) "No" 
                                           :di-action (om-dialog-item-act item
                                                       (let ((item item))
@@ -108,30 +95,21 @@ width height) nil)
 													  (declare (ignore item))
 													  (om-return-from-modal-dialog dialog t)))
                                           :default-button t))
-
-  (if (scoreeditor-p value) 
-      (cond
-       ((equal (class-name (class-of value)) 'poly)
-		 (let* ((voices (voices value))
-                (staves (mapcar #'correct-listener-staff voices)))
-		  ;(progn (set-edit-param (associated-box value) 'staff staves)
-	     ;			 (non-deter-modal-dialog dialog)) 
-		 (progn  (change-select-system (panel (editor dialog)) voices staves)
-		               (non-deter-modal-dialog dialog))				 
-		))				
-        ((equal (class-name (class-of value)) 'multi-seq)
-          (let* ((chord-seqs (chord-seqs value))
-                  (staves (mapcar #'correct-listener-staff chord-seqs)))
-		  ;(progn (set-edit-param (associated-box value) 'staff staves)
-		  ;		 (non-deter-modal-dialog dialog))
-		 (progn (change-select-system (panel (editor dialog)) chord-seqs staves)  
-		               (non-deter-modal-dialog dialog))
-		 )) 				  	  
-
-       (t (progn (change-system (panel (editor dialog)) (correct-listener-staff value)) 
-                     (non-deter-modal-dialog dialog))))
-
-   (non-deter-modal-dialog dialog)
+ 
+  (if (scoreeditor-p value)
+       (let ((score-class (class-name (class-of value)))) 
+        (cond ((or (equal score-class 'poly)
+	                 (equal score-class 'multi-seq))
+		   (let* ((inside (inside value))
+                           (staves (mapcar #'correct-listener-staff inside)))
+		    (loop for staff in staves
+			     for x from 0
+			     do (setf (nth x (staff-sys (panel (editor dialog)))) (get-staff-system staff)))
+		    (update-panel (panel (editor dialog)))
+		    (non-deter-modal-dialog dialog)))			
+                (t (progn (change-system (panel (editor dialog)) (correct-listener-staff value)) 
+                               (non-deter-modal-dialog dialog)))))
+     (non-deter-modal-dialog dialog)
     )
 ))
 

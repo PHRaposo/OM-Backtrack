@@ -23,13 +23,13 @@
 
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (screamer::declare-nondeterministic 'a-random-member-of))
+  (declare-nondeterministic 'a-random-member-of))
 
 (cl:defun a-random-member-of (sequence)
   "Nondeterministically returns an random element of SEQUENCE. The SEQUENCE must be
 either a list or a vector."
   (declare (ignore sequence))
-  (screamer::screamer-error
+  (screamer-error
    "A-RANDOM-MEMBER-OF is a nondeterministic function. As such, it must be called~%~
    only from a nondeterministic context."))
 
@@ -38,9 +38,9 @@ either a list or a vector."
   (cond
     ((listp sequence)
      (unless (null sequence)
-       (screamer::choice-point-external
+       (choice-point-external
         (loop (if (null (rest sequence)) (return))
-          (screamer::choice-point-internal (funcall continuation (first sequence)))
+          (choice-point-internal (funcall continuation (first sequence)))
           (setf sequence (value-of (rest sequence)))))
        (funcall continuation (first sequence))))
     ((vectorp sequence)
@@ -52,11 +52,13 @@ either a list or a vector."
               (choice-point-internal (funcall continuation (aref sequence i)))))
            (funcall continuation (aref sequence n))))))
     (t (error "SEQUENCE must be a sequence")))))
-	
+				
 (defmacro-compile-time n-values (n
 	 		    &body forms)				
 "FROM T2L-SCREAMER AND SMC(PWGL):
- Copyright (c) 2007, Kilian Sprotte. All rights reserved."
+ Copyright (c) 2007, Kilian Sprotte. All rights reserved.
+ TODO - DOC	 
+"
  (let ((values (gensym "VALUES-"))
        (last-value-cons  (gensym "LAST-VALUE-CONS-"))
        (value (gensym "VALUE-")))
@@ -74,7 +76,7 @@ either a list or a vector."
  	     (incf number))
       (when (>= number ,n) (return-from n-values)))))
       ,values)))
-	  
+ 
 (defmacro-compile-time print-values (&body forms)
   "Evaluates EXPRESSIONS as an implicit PROGN and outputs
 each of the nondeterministic values returned by the last EXPRESSION in
@@ -104,7 +106,6 @@ PRINT-VALUES is analogous to the standard top-level user interface in Prolog."
      (let ((value (progn ,@forms)))         
          (unless (om::non-determinise-listener value)
            (throw 'succeed value))))))
-
 
 ;; OLD VERSION FROM OM 4 (WITH GLOBAL VARIABLE -> PREFERENCES PANEL: REMOVED IN THIS VERSION)
    
