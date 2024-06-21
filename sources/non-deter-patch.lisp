@@ -12,7 +12,7 @@
 ;;; "?" - NONDETERMINISTIC PATCH (NEW VERSION FOR BACKTRACK 2.0)
 
 (defmethod nondeter-omlispfun? ((self OMBoxlispCall))
- (let* ((funname (car (gen-code self 0)))
+ (let* ((funname (reference self)) ;(car (gen-code self 0))) ;fix 20.06.2024
         (record (screamer::get-function-record funname)))
   (not (screamer::function-record-deterministic? record))))
   
@@ -47,7 +47,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; omNG-box-value - OMBoxPatch
 
-(defmethod omNG-box-value ((self OMBoxPatch) &optional (num-out 0))
+(defmethod omNG-box-value ((self OMBoxPatch) &optional (num-out 0)) 
 (handler-bind ((error #'(lambda (c)
                           (when *msg-error-label-on*
                             (om-message-dialog (string+ "Error while evaluating the box " (string (name self)) " : " 
@@ -55,8 +55,7 @@
                                                :size (om-make-point 300 200))
                             (clear-after-error self)
                             (om-abort)))))
-   (cond
-	   	   	           
+   (cond  	   	           
    ;((and (equal (allow-lock self) "l") ;<== TEST
    	;     (non-deter-patch? (reference self)))		 	 		 	 
    	 ;     (om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
@@ -107,7 +106,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; COMPILE-PATCH
-	   
+
 (defmethod compile-patch ((self OMPatch)) 
  "Generation of lisp code from the graphic boxes."
 	(unless (compiled? self)
@@ -146,20 +145,20 @@
                         (eval `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
 		  		   ,body)) 
                         (eval `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
-		  		   (let* ,(reverse *let-list*) ,body))))) 
+		  		   (let* ,(reverse *let-list*) ,body)))))
 	         ;(setf body `(values ,.(mapcar #'(lambda (theout) (gen-code theout 0)) out-box)))
 	  	 ; 	 (eval `(screamer::defun ,(intern (string out-symb) :om)  (,.symbols)
 	  	 ; 	     	(let* ,(reverse *let-list*) ,body))))	
 ;>==============================================================================<; 											   													   
   		    (t (setf body `(values ,.(mapcar #'(lambda (theout)
-  					               (gen-code theout 0)) out-box)))					   
+									   (gen-code theout 0)) out-box)))					   
   			   (eval `(defun ,(intern (string out-symb) :om)  (,.symbols)
   			   	       (let* ,(reverse *let-list*) ,body))))) 						   						   								   			  	  				 						 						 		 	 
 	  (setf *let-list* oldletlist)
 	  (setf *lambda-context* oldlambdacontext)
 		   ))	
 	(setf (compiled? self) t)))
-	
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
 ;;; PATCH-CODE
 
@@ -202,7 +201,7 @@
 		  		  	     	    (let* ,(reverse *let-list*) ,body)))))
 								
   		    (t (setf body `(values ,.(mapcar #'(lambda (theout)
-  					               (gen-code theout 0)) out-box)))					   
+				                      (gen-code theout 0)) out-box)))					   
   			   (setf patch-code `(defun ,(intern (string out-symb) :om)  (,.symbols)
   			   	       (let* ,(reverse *let-list*) ,body))))) 																	   													  
 	  (setf *let-list* oldletlist)
@@ -210,7 +209,7 @@
 	   patch-code ;===> returns the function code
 	 )))	
 	)
-	   
+	 	   
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;OMLispPatch
 
@@ -223,15 +222,17 @@
                   ,.(cdr (get-lisp-exp (lisp-exp patch))))))
     (eval `(defun ,(intern (string (code patch)) :om) () nil))))
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;Evaluation
 (defmethod special-lambda-value ((self OMBoxPatch) symbol)
    "Eval a box in lambda mode."
-   (if (non-deter-patch? (reference self))
        (multiple-value-bind (nesymbs args) (get-args-eval-currry self)
-        (eval `#'(lambda ,(reverse nesymbs)
-                  (,symbol ,.args))))	   
-	(call-next-method)
+         (if (non-deter-patch? (reference self))
+               (eval `#'(lambda ,(reverse nesymbs)
+                              (,symbol ,.args)))
+               (eval `#'(lambda ,(reverse nesymbs)
+                (apply ',symbol (list ,.args)))))					     
  ))
  
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -239,7 +240,6 @@
 
 (defmethod curry-lambda-code ((self OMBoxPatch) symbol)
    "Lisp code generetion for a box in lambda mode."
- (if (non-deter-patch? (reference self))
    (let ((nesymbs nil)
          (oldlambdacontext *lambda-context*))
      (setf *lambda-context* t)
@@ -255,15 +255,16 @@
                                        (list (value input) a) 
                                      (list a))))
                              (inputs self))))
-           `#'(lambda ,(reverse nesymbs)
-                (,symbol ,.args)))
-   
+        (if (non-deter-patch? (reference self))
+             `#'(lambda ,(reverse nesymbs)
+                  (,symbol ,.args))
+             `#'(lambda ,(reverse nesymbs)
+                  (apply ',symbol (list ,.args)))))
+ 
        (setf *lambda-context* oldlambdacontext)
    
-       ))
-  (call-next-method)
- ))
-	   
+       )))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
 ;;;TODO (IF NEEDED)
 ;;; 
