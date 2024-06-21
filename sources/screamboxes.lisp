@@ -152,6 +152,7 @@
       (t (let ((theinputs (loop for i in (inputs self) ;<=== FROM OMOut (gen-code method -> in-out-boxes.lisp)
 	                                 collect (connected? i)))
 				(oldletlist *let-list*)
+				(oldlambdacontext *lambda-context*)
 			    themethod code qargs form rep)
 				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 				(setf *let-list* nil) ;<=== TEST (RESET *LET-LIST* BEFORE CODE GNERATION)
@@ -192,6 +193,7 @@
 			   ;	                                      (,(intern (string (reference self)) :s) ,.qargs)))))
 			))
 		   (setf *let-list* oldletlist)
+		   (setf *lambda-context* oldlambdacontext)
            (when (equal (allow-lock self) "&")
              (setf (ev-once-p self) t)
              (setf (value self) rep))
@@ -210,6 +212,7 @@
 (let ((theinputs (loop for i in (inputs self)
 	                                 collect (connected? i)))
 	(oldletlist *let-list*)
+	(oldlambdacontext *lambda-context*)
     code qargs form)
 	(setf *let-list* nil)	
 	(setf code (loop for box in theinputs
@@ -232,7 +235,8 @@
 				     (t ;"BEST-VALUE"
 					  `(let* ,(reverse *let-list*)
 					    (,(intern (string (reference self)) :s) ,.qargs))))))
-   (setf *let-list* oldletlist)	
+   (setf *let-list* oldletlist)
+   (setf *lambda-context* oldlambdacontext)  	
   form))
  	
 (defmethod gen-code ((self screamer-valuation-boxes) numout)
