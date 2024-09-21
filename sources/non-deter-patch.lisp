@@ -17,13 +17,24 @@
   (not (screamer::function-record-deterministic? record))))
   
 (defmethod non-deter-patch? ((self OMLispPatchAbs))
- (let* ((exp (get-lisp-exp (lisp-exp self)))
-        (subst? (multiple-value-list (ignore-errors (screamer::needs-substitution? exp nil)))))
-  (if (and (= (length subst?) 2) ;<== FROM SCREAMER-PLUS (CAREFULLY)
-		      (null (car subst?))
-		      (typep (second subst?) (find-class 'error)))
-	   nil
-	  (car subst?))))
+(let* ((exp (get-lisp-exp (lisp-exp self)))
+         (non-deter? (multiple-value-list (ignore-errors (not (s::function-record-deterministic?
+                                                 (s::get-function-record
+                                                  (eval `(screamer::defun ,(intern (string (code self)) :om)
+                                                             ,.(cdr exp))))))))))
+ (if (and (= (length non-deter?) 2) 
+	   (null (car non-deter?))
+	   (typep (second non-deter?) (find-class 'error)))
+   nil
+  (car non-deter?))))
+  
+ ;(let* ((exp (get-lisp-exp (lisp-exp self)))
+ ;       (subst? (multiple-value-list (ignore-errors (screamer::needs-substitution? exp nil)))))
+ ; (if (and (= (length subst?) 2) ;<== FROM SCREAMER-PLUS (CAREFULLY)
+;		      (null (car subst?))
+;		      (typep (second subst?) (find-class 'error)))
+;	   nil
+;	  (car subst?))))
 	  
 (defmethod non-deter-patch? ((self OMPatch)) 
  (let* ((boxes (boxes self))
