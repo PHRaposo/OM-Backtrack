@@ -3420,9 +3420,9 @@ Otherwise returns the value of X."
                   (attach-noticer!-internal noticer (variable-value x))))))
 
 (defun attach-noticer! (noticer x)
-  (attach-noticer!-internal noticer x)
+ (attach-noticer!-internal noticer x)  
   (funcall noticer))
-
+ 
 (defun run-noticers (x)
   (dolist (noticer (variable-noticers x)) (funcall noticer)))
 
