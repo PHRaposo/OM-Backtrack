@@ -11,6 +11,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; "?" - NONDETERMINISTIC PATCH (NEW VERSION FOR BACKTRACK 2.0)
 
+(defvar *backtrack-debug* nil)
+
 (defmethod nondeter-omlispfun? ((self OMBoxlispCall))
  (let* ((funname (reference self)) ;(car (gen-code self 0))) ;fix 20.06.2024
         (record (screamer::get-function-record funname)))
@@ -22,27 +24,21 @@
                                                  (s::get-function-record
                                                   (eval `(screamer::defun ,(intern (string (code self)) :om)
                                                              ,.(cdr exp))))))))))
- (if (and (= (length non-deter?) 2) 
+ (if (and (= (length non-deter?) 2) ;<== FROM SCREAMER-PLUS (CAREFULLY)
 	   (null (car non-deter?))
 	   (typep (second non-deter?) (find-class 'error)))
    nil
   (car non-deter?))))
-  
- ;(let* ((exp (get-lisp-exp (lisp-exp self)))
- ;       (subst? (multiple-value-list (ignore-errors (screamer::needs-substitution? exp nil)))))
- ; (if (and (= (length subst?) 2) ;<== FROM SCREAMER-PLUS (CAREFULLY)
-;		      (null (car subst?))
-;		      (typep (second subst?) (find-class 'error)))
-;	   nil
-;	  (car subst?))))
 	  
 (defmethod non-deter-patch? ((self OMPatch)) 
  (let* ((boxes (boxes self))
 	    (screamerboxes (find-class-boxes boxes 'screamerboxes)) ;<== SCREAMER FUNCTIONS
 	    (screamer-valuation-boxes (find-class-boxes boxes 'screamer-valuation-boxes)) ;<== SCREAMER VALUATION
         (lispfuns (find-class-boxes boxes 'omboxlispcall)) ;<== OMLISPFUN
-        (sub-patches (find-class-boxes boxes 'omboxabspatch)) ;<== OMBOXABSPATCH (SUB PATCHES)
-        (non-deter-sub-patch? (not (null (position t (mapcar #'(lambda (x) (non-deter-patch? (reference x))) sub-patches))))))
+        (sub-patches (remove-if #'(lambda (subpatch) (equal (reference subpatch) self))
+		(x-append (find-class-boxes boxes 'omboxpatch) ;<== COLLECT OMBOXPATCH AND REMOVE RECURSIVE PATCHES (29.12.2024)
+		          (find-class-boxes boxes 'omboxabspatch)))) ;<== OMBOXABSPATCH (SUB PATCHES)
+        (non-deter-sub-patch? (not (null (position t (mapcar #'(lambda (x) (non-deter-patch? (reference x))) sub-patches))))))		
   (if (or screamerboxes (some #'nondeter-omlispfun? lispfuns) non-deter-sub-patch? screamer-valuation-boxes) 
        t
        nil)))
@@ -58,7 +54,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; omNG-box-value - OMBoxPatch
 
-(defmethod omNG-box-value ((self OMBoxPatch) &optional (num-out 0)) 
+(defmethod omNG-box-value ((self OMBoxPatch) &optional (num-out 0))
+(when *backtrack-debug* (print (format nil "COMPILED?: ~A" (compiled? (reference self))))) 
 (handler-bind ((error #'(lambda (c)
                           (when *msg-error-label-on*
                             (om-message-dialog (string+ "Error while evaluating the box " (string (name self)) " : " 
@@ -66,13 +63,7 @@
                                                :size (om-make-point 300 200))
                             (clear-after-error self)
                             (om-abort)))))
-   (cond  	   	           
-   ;((and (equal (allow-lock self) "l") ;<== TEST
-   	;     (non-deter-patch? (reference self)))		 	 		 	 
-   	 ;     (om-message-dialog "Nondeterministic patches in lambda mode has not been implemented yet.")
-      ;        (clear-after-error self)
-       ;       (om-abort))	
-				  				             				 	 			
+   (cond  	   	           			  				             				 	 			
     ((and (equal (allow-lock self) "x") (value self))
      (nth num-out (value self)))	 
 		 
@@ -80,21 +71,29 @@
 	 (setf (value self) (list (reference self))) (car (value self))))
 	 	 
     ((equal (allow-lock self) "l")
-     (unless (compiled? (reference self))
+     ;(unless (compiled? (reference self))
        (if (and (lisp-exp-p (reference self)) (editorframe self))
-         (compile-without-close (editorframe self))          
-          (compile-patch (reference self))))				 	 				  
-         (setf (value self) ;;; test ...  => OM 7.2
+         (progn (when *backtrack-debug* (print "OMLISP-LAMBDA-PATCH COMPILED!"))
+		  (compile-without-close (editorframe self)))          
+          (progn (when *backtrack-debug* (print "LAMBDA-PATCH COMPILED!"))
+		   (compile-patch (reference self)))
+		  ) ;)				 	 				  
+         (setf (value self) ;;; TEST
                 (list (special-lambda-value self (intern (string (code (reference self))) :om))))
-         (car (value self)))
+         (when *backtrack-debug* (print "SETF LAMBDA VALUE: TEST"))
+		 (car (value self))		 
+		 )
 		 		  
     ((and (equal (allow-lock self) "&") (ev-once-p self)) 
      (nth num-out (value self)))
 	 
-    (t (unless (compiled? (reference self))
+    (t ;(unless (compiled? (reference self))
            (if (and (lisp-exp-p (reference self)) (editorframe (reference self))) 
-             (compile-without-close (editorframe (reference self)))
-             (compile-patch (reference self))))
+             (progn (compile-without-close (editorframe (reference self))) 
+				(when *backtrack-debug* (print "OMLISPPATCH COMPILED!")))
+             (progn (compile-patch (reference self)) 
+			  (when *backtrack-debug* (print "PATCH COMPILED!"))))
+			  ;)
 		(let* ((args  (mapcar #'(lambda (input) 
                                  (omNG-box-value  input)) (inputs self)))
               (rep nil))
@@ -109,9 +108,11 @@
            (setf (value self) rep))
          (when (equal (allow-lock self) "x")
            (setf (value self) rep))
-           ;;;; TEST => OM 7.2
+           ;;;; TEST
            (when (equal (allow-lock self) nil)
-             (setf (value self) rep))
+		   (when *backtrack-debug* (print "ALLOW-LOCK NIL: SETF VALUE - TEST"))
+             (setf (value self) rep)
+			  )
            ;;;;	 	   
              (nth num-out rep))))))
 
@@ -120,7 +121,7 @@
 
 (defmethod compile-patch ((self OMPatch)) 
  "Generation of lisp code from the graphic boxes."
-	(unless (compiled? self)
+	;(unless (compiled? self)
 	(if (lisp-exp-p self)
 	    (if (non-deter-patch? self)
             (compile (eval `(screamer::defun ,(intern (string (code self)) :om)
@@ -168,7 +169,8 @@
 	  (setf *let-list* oldletlist)
 	  (setf *lambda-context* oldlambdacontext)
 		   ))	
-	(setf (compiled? self) t)))
+	(setf (compiled? self) t))
+	;)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;	
 ;;; PATCH-CODE

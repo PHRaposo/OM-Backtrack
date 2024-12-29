@@ -363,6 +363,15 @@ Output : t if the list is growing
   :icon 486 
   (screamer::funcall-nondeterministic fun arguments))
 
+(defmethod get-boxcallclass-fun ((self (eql 'mapcar-nondeterministic ))) 'screamerboxes)
+(defmethod get-real-funname ((self (eql 'mapcar-nondeterministic ))) self)
+(defmethod! mapcar-nondeterministic  ((fun function) &rest arguments)
+  :initvals '(nil nil)
+  :indoc '("lambda function" "variables")
+  :doc "OM equivalent of SCREAMER::MAPCAR-NONDETERMINISTIC." 
+  :icon 486 
+  (screamer::mapcar-nondeterministic fun arguments))
+  
 ;; TODO: FOR-EFFECTS / LOCAL / GLOBAL
 (defmethod get-boxcallclass-fun ((self (eql 'for-effects))) 'screamer-valuation-boxes)
 (defmethod get-real-funname ((self (eql 'for-effects))) self)
