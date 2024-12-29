@@ -2923,13 +2923,10 @@ function."
   (let ((function (value-of function)))
     (if (nondeterministic-function? function)
         ;; note: I don't know how to avoid the consing here.
-	    (apply #'apply (nondeterministic-function-function function) ;<== from swapneils
-	               continuation argument arguments)
-	        (funcall continuation (apply #'apply function argument arguments)))))
-        ;(apply (nondeterministic-function-function function)
-        ;       continuation
-        ;       (apply #'list* (cons argument arguments)))
-        ;(funcall continuation (apply function argument arguments)))))
+        (apply (nondeterministic-function-function function)
+               continuation
+               (apply #'list* (cons argument arguments)))
+        (funcall continuation (apply function argument arguments)))))
 
 (cl:defun multiple-value-call-nondeterministic (function-form &rest values-forms)
   "Analogous to the CL:MULTIPLE-VALUE-CALL, except FUNCTION-FORM can evaluate
@@ -4218,13 +4215,12 @@ Otherwise returns the value of X."
 (defun +-rule-down (z x y)
   ;; note: We can't assert that X and Y are integers when Z is an integer since
   ;;       Z may be an integer when X and Y are Gaussian integers. But we can
-  ;;       make such an assertion if either X or Y is "an integer" (original: "is real").
-  ;;	   If the Screamer type system could distinguish Gaussian integers from other
-  ;;       complex numbers we could make such an assertion whenever either X or Y was
+  ;;       make such an assertion if either X or Y is real. If the Screamer
+  ;;       type system could distinguish Gaussian integers from other complex
+  ;;       numbers we could make such an assertion whenever either X or Y was
   ;;       not a Gaussian integer.
-  (if (and (variable-integer? z) (or (variable-integer? x) (variable-integer? y))) ;<== from swapneils
- ;(if (and (variable-integer? z) (or (variable-real? x) (variable-real? y)))
-	  (restrict-integer! x))
+  (if (and (variable-integer? z) (or (variable-real? x) (variable-real? y)))
+      (restrict-integer! x))
   ;; note: Ditto.
   (if (and (variable-real? z) (or (variable-real? x) (variable-real? y)))
       (restrict-real! x))
@@ -4350,12 +4346,11 @@ Otherwise returns the value of X."
 (defun *-rule-down (z x y)
   ;; note: We can't assert that X and Y are integers when Z is an integer since
   ;;       Z may be an integer when X and Y are Gaussian integers. But we can
-  ;;       make such an assertion if either X or Y is "an integer" (original: "is real").
+  ;;       make such an assertion if either X or Y is real.
   ;;       If the Screamer type system could distinguish Gaussian integers from other
   ;;       complex numbers we could make such an assertion whenever either X or Y was
   ;;       not a Gaussian integer.
-  (if (and (variable-integer? z) (or (variable-integer? x) (variable-integer? y))) ;<== fix from swapneils
- ;(if (and (variable-integer? z) (or (variable-real? x) (variable-real? y)))
+ (if (and (variable-integer? z) (or (variable-real? x) (variable-real? y)))
       (restrict-integer! x))
   ;; note: Ditto.
   (if (and (variable-real? z) (or (variable-real? x) (variable-real? y)))
@@ -4438,7 +4433,7 @@ Otherwise returns the value of X."
              (not (variable? y))
              (/= z (max x y)))
         (fail))))
-
+		
 (defun =-rule (x y)
   (cond
     ;; note: I forget why +-RULE *-RULE MIN-RULE and MAX-RULE must perform the
@@ -5906,28 +5901,14 @@ restricted to be consistent with other arguments."
 (defun known?-notv-equalv (x y) (one-value (progn (assert!-equalv x y) nil) t))
 
 (defun assert!-notv-equalv (x y)
-;; note: fix by swapneils
- (cond
-   ((known?-equalv x y) (fail))
-   ((not (known?-notv-equalv x y))
-    (let* ((x (variablize x))
-           (y (variablize y))
-           (noticer #'(lambda ()
-                        (cond ((and (known?-numberpv x)
-                                    (known?-numberpv y))
-                               (/=-rule x y))
-                              ((known?-equalv x y) (fail))))))
-      (attach-noticer! noticer x)
-      (attach-noticer! noticer y)))))
-
 ;; note: Can be made more efficient so that if you later find out that
 ;;       X and Y are KNOWN?-NUMBERPV you can then ASSERT!-/=V2.
-; (if (known?-equalv x y) (fail))
-; (unless (known?-notv-equalv x y)
-;   (let ((x (variablize x))
-;         (y (variablize y)))
-;     (attach-noticer! #'(lambda () (if (known?-equalv x y) (fail))) x)
-;     (attach-noticer! #'(lambda () (if (known?-equalv x y) (fail))) y))))
+ (if (known?-equalv x y) (fail))
+ (unless (known?-notv-equalv x y)
+   (let ((x (variablize x))
+         (y (variablize y)))
+     (attach-noticer! #'(lambda () (if (known?-equalv x y) (fail))) x)
+     (attach-noticer! #'(lambda () (if (known?-equalv x y) (fail))) y))))
 
 (defun equalv (x y)
   "Returns T if the aggregate object X is known to equal the aggregate object

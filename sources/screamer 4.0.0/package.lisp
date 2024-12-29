@@ -43,6 +43,7 @@
            #:nondeterministic-function?
            #:funcall-nondeterministic
            #:apply-nondeterministic
+		   #:mapcar-nondeterministic
            #:unwind-trail
            #:trail
            #:purge
