@@ -27,9 +27,6 @@
 ;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-;; note: Since Screamer is always loaded in OM (from MathTools) I believe it's safe to do this here. 
-;(CLRHASH SCREAMER::*FUNCTION-RECORD-TABLE*)
-
 (in-package :om)
 
 ;--------------------------------------------------
