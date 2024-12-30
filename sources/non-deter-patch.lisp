@@ -18,7 +18,8 @@
         (record (screamer::get-function-record funname)))
   (not (screamer::function-record-deterministic? record))))
   
-(defmethod non-deter-patch? ((self OMLispPatchAbs))
+(defmethod non-deter-patch? ((self OMLispPatchAbs) &optional patches)
+(declare (ignore patches))
 (let* ((exp (get-lisp-exp (lisp-exp self)))
          (non-deter? (multiple-value-list (ignore-errors (not (s::function-record-deterministic?
                                                  (s::get-function-record
@@ -29,16 +30,21 @@
 	   (typep (second non-deter?) (find-class 'error)))
    nil
   (car non-deter?))))
-	  
-(defmethod non-deter-patch? ((self OMPatch)) 
- (let* ((boxes (boxes self))
+
+(defmethod non-deter-patch? ((self OMPatch) &optional patches) 
+ (let* ((patches (x-append self patches))
+        (boxes (boxes self))
 	    (screamerboxes (find-class-boxes boxes 'screamerboxes)) ;<== SCREAMER FUNCTIONS
 	    (screamer-valuation-boxes (find-class-boxes boxes 'screamer-valuation-boxes)) ;<== SCREAMER VALUATION
         (lispfuns (find-class-boxes boxes 'omboxlispcall)) ;<== OMLISPFUN
-        (sub-patches (remove-if #'(lambda (subpatch) (equal (reference subpatch) self))
-		(x-append (find-class-boxes boxes 'omboxpatch) ;<== COLLECT OMBOXPATCH AND REMOVE RECURSIVE PATCHES (29.12.2024)
-		          (find-class-boxes boxes 'omboxabspatch)))) ;<== OMBOXABSPATCH (SUB PATCHES)
-        (non-deter-sub-patch? (not (null (position t (mapcar #'(lambda (x) (non-deter-patch? (reference x))) sub-patches))))))		
+        (sub-patches  (x-append (find-class-boxes boxes 'omboxpatch) ;<== COLLECT OMBOXPATCH (29.12.2024)
+		                        (find-class-boxes boxes 'omboxabspatch))) ;<== OMBOXABSPATCH (SUB PATCHES)
+        (non-deter-sub-patch? (not (null (position t (mapcar #'(lambda (x)
+													  (let ((ref (reference x)))
+													   (if (member ref patches :test #'equal)
+										                    nil
+		                                                   (non-deter-patch? ref patches))))
+													  sub-patches))))))
   (if (or screamerboxes (some #'nondeter-omlispfun? lispfuns) non-deter-sub-patch? screamer-valuation-boxes) 
        t
        nil)))
