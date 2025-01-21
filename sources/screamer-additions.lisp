@@ -172,8 +172,9 @@ function."
       (attach-noticer! noticer x)
       (attach-noticer! noticer y)))))
 
+#|
 ;; MODIFIED VERSION OF RESTRICT-BOUNDS!	 - IN-PROGRESS
-
+;; NEEDS MORE TESTS...
 (defun restrict-lower-bound! (x lower-bound)
   ;; NOTE: X must be a variable.
   ;; NOTE: LOWER-BOUND must be a real constant.
@@ -325,6 +326,7 @@ function."
                           (lower lower)
                           (t (variable-value x)))))))
           (run-noticers x)))))
+|#
 
 ; ================================================================================================ ;
 ;; CHANGES FROM REPMUS LIBRARY (PATCHWORK - OPENMUSIC)
