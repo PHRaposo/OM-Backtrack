@@ -384,7 +384,8 @@ function."
 (restrict-integer! x))
 ;; note on this version: In the case of the combinations (non-integer + integer) or (integer + non-integer)
 ;; we can assert that Z is not an integer. 
-(if (and (variable-noninteger? z) (or (variable-integer? x) (variable-integer? y)))
+(if (and (or (variable-noninteger? z) (variable-noninteger? y))
+         (or (variable-integer? z) (variable-integer? y)))
 (restrict-noninteger! x))
 ;; note: Ditto.
 (if (and (variable-real? z) (or (variable-real? x) (variable-real? y)))
