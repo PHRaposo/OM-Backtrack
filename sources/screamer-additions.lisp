@@ -326,7 +326,6 @@ function."
                           (lower lower)
                           (t (variable-value x)))))))
           (run-noticers x)))))
-|#
 
 ; ================================================================================================ ;
 ;; CHANGES FROM REPMUS LIBRARY (PATCHWORK - OPENMUSIC)
@@ -479,3 +478,5 @@ function."
 		 (not (variable? z))
 		 (/= z (* x y)))
 	(fail))))
+|#
+
